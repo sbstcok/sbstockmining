@@ -49,10 +49,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
       {/* Sidebar */}
       <motion.aside
-        initial={{ x: -280 }}
-        animate={{ x: sidebarOpen ? 0 : -280 }}
-        transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="fixed inset-y-0 left-0 z-50 w-70 bg-card border-r border-border lg:static lg:translate-x-0 lg:z-0"
+        className={`fixed inset-y-0 left-0 z-50 w-70 bg-card border-r border-border transition-transform duration-300 lg:static lg:translate-x-0 lg:z-0 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
       >
         <div className="flex h-full flex-col">
           {/* Header */}
