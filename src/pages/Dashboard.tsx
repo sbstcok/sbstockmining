@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -15,25 +14,137 @@ import {
   EyeOff
 } from "lucide-react";
 import { WalletModal } from "@/components/WalletModal";
+import { auth, db } from "../../lib/firebase";
+import { collection, query, where, getDocs, DocumentData } from "firebase/firestore";
 
 const Dashboard = () => {
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [modalType, setModalType] = useState<'deposit' | 'withdraw' | 'invest' | null>(null);
+  const [cryptoData, setCryptoData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  interface CoinData {
+    name: string;
+    symbol: string;
+    id: string;
+  }
 
-  const cryptoData = [
-    { name: "Bitcoin", symbol: "BTC", price: 67420.30, change: 2.45, positive: true },
-    { name: "Ethereum", symbol: "ETH", price: 3891.20, change: -1.32, positive: false },
-    { name: "Solana", symbol: "SOL", price: 189.45, change: 5.67, positive: true },
-    { name: "Cardano", symbol: "ADA", price: 1.25, change: 3.21, positive: true },
-    { name: "Polygon", symbol: "MATIC", price: 0.87, change: -2.15, positive: false },
-    { name: "Chainlink", symbol: "LINK", price: 18.92, change: 1.89, positive: true }
-  ];
+  interface CoinMap {
+    [key: string]: CoinData;
+  }
 
-  const investmentPlans = [
-    { name: "Starter Plan", minAmount: 100, roi: 5, duration: "30 days" },
-    { name: "Pro Plan", minAmount: 1000, roi: 10, duration: "60 days" },
-    { name: "Elite Plan", minAmount: 10000, roi: 20, duration: "90 days" }
-  ];
+  interface TransactionData {
+    id: string;
+    amount: number;
+    userId: string;
+    createdAt: string;
+    status: string;
+  }
+  
+  const [userInvestments, setUserInvestments] = useState<TransactionData[]>([]);
+  const [userWithdrawals, setUserWithdrawals] = useState<TransactionData[]>([]);
+  const [totalBalance, setTotalBalance] = useState(0);
+
+  // Map of display names to CoinGecko IDs
+  const coinMap: CoinMap = useMemo(() => ({
+    BTC: { name: "Bitcoin", symbol: "BTC", id: "bitcoin" },
+    ETH: { name: "Ethereum", symbol: "ETH", id: "ethereum" },
+    SOL: { name: "Solana", symbol: "SOL", id: "solana" },
+    ADA: { name: "Cardano", symbol: "ADA", id: "cardano" },
+    MATIC: { name: "Polygon", symbol: "MATIC", id: "matic-network" },
+    LINK: { name: "Chainlink", symbol: "LINK", id: "chainlink" }
+  }), []);
+
+  // Fetch real-time crypto prices
+  // Fetch user's investments and withdrawals
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const user = auth.currentUser;
+        if (!user) return;
+
+        // Fetch investments
+        const investmentsQuery = query(
+          collection(db, "investments"),
+          where("userId", "==", user.uid)
+        );
+        const investmentsSnapshot = await getDocs(investmentsQuery);
+        const investments = investmentsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as TransactionData[];
+        setUserInvestments(investments);
+
+        // Fetch withdrawals
+        const withdrawalsQuery = query(
+          collection(db, "withdrawals"),
+          where("userId", "==", user.uid)
+        );
+        const withdrawalsSnapshot = await getDocs(withdrawalsQuery);
+        const withdrawals = withdrawalsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as TransactionData[];
+        setUserWithdrawals(withdrawals);
+
+        // Calculate total balance
+        const totalInvestments = investments.reduce((sum, inv) => sum + Number(inv.amount), 0);
+        const totalWithdrawals = withdrawals.reduce((sum, wd) => sum + Number(wd.amount), 0);
+        setTotalBalance(totalInvestments - totalWithdrawals);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        setError("Failed to load user data");
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  useEffect(() => {
+    const fetchPrices = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const ids = Object.values(coinMap).map(coin => coin.id).join(",");
+        const response = await fetch(
+          `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch prices");
+        }
+
+        const data = await response.json();
+
+        // Transform API data to match cryptoData format
+        const formattedData = Object.keys(coinMap).map(symbol => {
+          const coin = coinMap[symbol];
+          const price = data[coin.id]?.usd || 0;
+          const change = data[coin.id]?.usd_24h_change || 0;
+          return {
+            name: coin.name,
+            symbol: coin.symbol,
+            price: parseFloat(price.toFixed(2)),
+            change: parseFloat(Math.abs(change).toFixed(2)),
+            positive: change >= 0
+          };
+        });
+
+        setCryptoData(formattedData);
+        setLoading(false);
+      } catch (err) {
+        setError("Unable to fetch real-time prices. Please try again later.");
+        setLoading(false);
+      }
+    };
+
+    fetchPrices();
+
+    // Optional: Poll every 60 seconds for updated prices
+    const interval = setInterval(fetchPrices, 60000);
+    return () => clearInterval(interval);
+  }, [coinMap]);
 
   return (
     <DashboardLayout>
@@ -70,7 +181,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-4xl font-bold mb-4 text-white">
-                {balanceVisible ? "$5,000.00" : "••••••"}
+                {balanceVisible ? `$${totalBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : "••••••"}
               </div>
               <div className="flex items-center space-x-2 text-white/80 mb-6">
                 <ArrowUpRight className="h-4 w-4" />
@@ -119,45 +230,11 @@ const Dashboard = () => {
             variant="outline"
           >
             <Bitcoin className="h-5 w-5 text-primary" />
-            <span className="text-sm">Market</span>
+            <span className="text-sm hover:text-black">Market</span>
           </Button>
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Investment Plans */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-          >
-            <Card className="shadow-card border-border/50">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                  <span>Investment Plans</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {investmentPlans.map((plan, index) => (
-                  <div key={index} className="p-4 border border-border/50 rounded-lg hover:shadow-card transition-shadow">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold">{plan.name}</h3>
-                      <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-                        {plan.roi}% ROI
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Min: ${plan.minAmount.toLocaleString()} • Duration: {plan.duration}
-                    </p>
-                    <Button size="sm" className="w-full">
-                      Invest
-                    </Button>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </motion.div>
-
           {/* Market Overview */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
@@ -172,34 +249,42 @@ const Dashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {cryptoData.map((crypto, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 hover:bg-muted/30 rounded-lg transition-colors">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center">
-                        <span className="text-white text-xs font-bold">
-                          {crypto.symbol.slice(0, 2)}
-                        </span>
+                {loading ? (
+                  <div className="text-center text-muted-foreground">Loading prices...</div>
+                ) : error ? (
+                  <div className="text-center text-destructive">{error}</div>
+                ) : cryptoData.length === 0 ? (
+                  <div className="text-center text-muted-foreground">No price data available</div>
+                ) : (
+                  cryptoData.map((crypto, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 hover:bg-muted/30 rounded-lg transition-colors">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center">
+                          <span className="text-white text-xs font-bold">
+                            {crypto.symbol.slice(0, 2)}
+                          </span>
+                        </div>
+                        <div>
+                          <div className="font-medium">{crypto.name}</div>
+                          <div className="text-sm text-muted-foreground">{crypto.symbol}</div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="font-medium">{crypto.name}</div>
-                        <div className="text-sm text-muted-foreground">{crypto.symbol}</div>
+                      <div className="text-right">
+                        <div className="font-semibold">${crypto.price.toLocaleString()}</div>
+                        <div className={`text-sm flex items-center space-x-1 ${
+                          crypto.positive ? "text-success" : "text-destructive"
+                        }`}>
+                          {crypto.positive ? (
+                            <TrendingUp className="h-3 w-3" />
+                          ) : (
+                            <TrendingDown className="h-3 w-3" />
+                          )}
+                          <span>{crypto.change}%</span>
+                        </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-semibold">${crypto.price.toLocaleString()}</div>
-                      <div className={`text-sm flex items-center space-x-1 ${
-                        crypto.positive ? "text-success" : "text-destructive"
-                      }`}>
-                        {crypto.positive ? (
-                          <TrendingUp className="h-3 w-3" />
-                        ) : (
-                          <TrendingDown className="h-3 w-3" />
-                        )}
-                        <span>{Math.abs(crypto.change)}%</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </CardContent>
             </Card>
           </motion.div>

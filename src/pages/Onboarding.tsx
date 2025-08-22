@@ -8,112 +8,130 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import { auth, db } from "../../lib/firebase"
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 
 const Onboarding = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    fullName: "",
+  });
 
-  const handleSubmit = async (e: React.FormEvent, type: 'signup' | 'login') => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    toast.success(`${type === 'signup' ? 'Account created' : 'Logged in'} successfully!`);
-    setIsLoading(false);
-    navigate('/dashboard');
+    setLoading(true);
+
+    try {
+      await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      toast.success("Successfully logged in!");
+      navigate("/dashboard");
+    } catch (error: unknown) {
+      console.error("Sign in error:", error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to sign in");
+      } 
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
+
+      // Create user profile in Firestore
+      await setDoc(doc(db, "users", userCredential.user.uid), {
+        fullName: formData.fullName,
+        email: formData.email,
+        createdAt: new Date().toISOString(),
+        totalInvestments: 0,
+        totalWithdrawals: 0
+      });
+
+      toast.success("Account created successfully!");
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Sign up error:", error);
+      toast.error(error.message || "Failed to create account");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="min-h-screen bg-background flex items-center justify-center p-6"
-    >
-      <div className="absolute inset-0 bg-gradient-hero opacity-5" />
-      
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="w-full max-w-md relative z-10"
+    <div className="min-h-screen bg-background relative">
+      <Button
+        variant="ghost"
+        className="absolute top-4 left-4"
+        onClick={() => navigate("/")}
       >
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate('/')}
-          className="mb-6 hover:bg-muted/50"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Home
-        </Button>
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Back
+      </Button>
 
-        <Card className="shadow-elevated border-border/50">
-          <CardHeader className="text-center pb-6">
-            <CardTitle className="text-2xl font-bold">Welcome</CardTitle>
+      <div className="container flex items-center justify-center min-h-screen py-20">
+        <Card className="w-full max-w-lg">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">Welcome</CardTitle>
             <CardDescription>
-              Create an account or sign in to get started
+              Sign in to your account or create a new one
             </CardDescription>
           </CardHeader>
-          
           <CardContent>
-            <Tabs defaultValue="signup" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
+            <Tabs defaultValue="signin" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="signin">Sign In</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                <TabsTrigger value="login">Login</TabsTrigger>
               </TabsList>
               
-              <TabsContent value="signup">
-                <form onSubmit={(e) => handleSubmit(e, 'signup')} className="space-y-4">
+              <TabsContent value="signin">
+                <form onSubmit={handleSignIn} className="space-y-4">
                   <div>
-                    <Label htmlFor="fullName">Full Name</Label>
-                    <Input 
-                      id="fullName" 
-                      placeholder="John Doe" 
-                      required 
-                      className="mt-1"
+                    <Label htmlFor="signin-email">Email</Label>
+                    <Input
+                      id="signin-email"
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
+                      placeholder="you@example.com"
                     />
                   </div>
-                  
+
                   <div>
-                    <Label htmlFor="country">Country of Origin</Label>
-                    <Input 
-                      id="country" 
-                      placeholder="United States" 
-                      required 
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input 
-                      id="email" 
-                      type="email" 
-                      placeholder="john@example.com" 
-                      required 
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="password">Password</Label>
-                    <div className="relative mt-1">
-                      <Input 
-                        id="password" 
-                        type={showPassword ? "text" : "password"} 
-                        placeholder="Create a strong password" 
-                        required 
-                        className="pr-10"
+                    <Label htmlFor="signin-password">Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="signin-password"
+                        type={showPassword ? "text" : "password"}
+                        required
+                        value={formData.password}
+                        onChange={(e) =>
+                          setFormData({ ...formData, password: e.target.value })
+                        }
+                        placeholder="••••••••"
                       />
                       <Button
                         type="button"
                         variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        size="icon"
+                        className="absolute right-2 top-1/2 -translate-y-1/2"
                         onClick={() => setShowPassword(!showPassword)}
                       >
                         {showPassword ? (
@@ -124,45 +142,60 @@ const Onboarding = () => {
                       </Button>
                     </div>
                   </div>
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Creating Account..." : "Create Account"}
+
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Please wait..." : "Sign In"}
                   </Button>
                 </form>
               </TabsContent>
-              
-              <TabsContent value="login">
-                <form onSubmit={(e) => handleSubmit(e, 'login')} className="space-y-4">
+
+              <TabsContent value="signup">
+                <form onSubmit={handleSignUp} className="space-y-4">
                   <div>
-                    <Label htmlFor="loginEmail">Email</Label>
-                    <Input 
-                      id="loginEmail" 
-                      type="email" 
-                      placeholder="john@example.com" 
-                      required 
-                      className="mt-1"
+                    <Label htmlFor="fullName">Full Name</Label>
+                    <Input
+                      id="fullName"
+                      required
+                      value={formData.fullName}
+                      onChange={(e) =>
+                        setFormData({ ...formData, fullName: e.target.value })
+                      }
+                      placeholder="John Doe"
                     />
                   </div>
-                  
+
                   <div>
-                    <Label htmlFor="loginPassword">Password</Label>
-                    <div className="relative mt-1">
-                      <Input 
-                        id="loginPassword" 
-                        type={showPassword ? "text" : "password"} 
-                        placeholder="Enter your password" 
-                        required 
-                        className="pr-10"
+                    <Label htmlFor="signup-email">Email</Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
+                      placeholder="you@example.com"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="signup-password">Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="signup-password"
+                        type={showPassword ? "text" : "password"}
+                        required
+                        value={formData.password}
+                        onChange={(e) =>
+                          setFormData({ ...formData, password: e.target.value })
+                        }
+                        placeholder="••••••••"
                       />
                       <Button
                         type="button"
                         variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        size="icon"
+                        className="absolute right-2 top-1/2 -translate-y-1/2"
                         onClick={() => setShowPassword(!showPassword)}
                       >
                         {showPassword ? (
@@ -173,21 +206,17 @@ const Onboarding = () => {
                       </Button>
                     </div>
                   </div>
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Signing In..." : "Sign In"}
+
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Please wait..." : "Create Account"}
                   </Button>
                 </form>
               </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 };
 

@@ -3,10 +3,11 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Copy, Check, Wallet, CreditCard, Building2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-
+import {auth, db, addDoc, collection } from "../../lib/firebase";
 interface WalletModalProps {
   type: 'deposit' | 'withdraw' | 'invest';
   onClose: () => void;
@@ -15,12 +16,52 @@ interface WalletModalProps {
 export const WalletModal = ({ type, onClose }: WalletModalProps) => {
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     address: '',
     amount: '',
     password: ''
   });
+
+  const investmentOptions = [
+    {
+      id: 'bitcoin-mining',
+      name: 'Bitcoin Mining Pool',
+      description: 'Join our Bitcoin mining pool and earn daily rewards',
+      minAmount: 1000,
+      apr: '12%',
+      duration: '12 months',
+      riskLevel: 'Medium'
+    },
+    {
+      id: 'eth-staking',
+      name: 'ETH 2.0 Staking',
+      description: 'Stake your ETH and earn staking rewards',
+      minAmount: 500,
+      apr: '8%',
+      duration: '6 months',
+      riskLevel: 'Low'
+    },
+    {
+      id: 'defi-yield',
+      name: 'DeFi Yield Farming',
+      description: 'Earn high yields through automated DeFi strategies',
+      minAmount: 2000,
+      apr: '15%',
+      duration: '3 months',
+      riskLevel: 'High'
+    },
+    {
+      id: 'nft-fund',
+      name: 'NFT Investment Fund',
+      description: 'Diversified portfolio of premium NFT assets',
+      minAmount: 5000,
+      apr: '20%',
+      duration: '9 months',
+      riskLevel: 'High'
+    }
+  ];
 
   const cryptoAddresses = [
     { 
@@ -52,13 +93,6 @@ export const WalletModal = ({ type, onClose }: WalletModalProps) => {
     { id: 'external', name: 'External Wallet', icon: ExternalLink }
   ];
 
-  const investmentWallets = [
-    { id: 'metamask', name: 'MetaMask', address: '0x742d35Cc6634C0532925a3b8D465C1F9c5cF4B7F' },
-    { id: 'trustwallet', name: 'Trust Wallet', address: '0x8ba1f109551bD432803012645Hac136c22C' },
-    { id: 'coinbase', name: 'Coinbase Wallet', address: '0x1a2b3c4d5e6f7890abcdef1234567890abcdef12' },
-    { id: 'binance', name: 'Binance Chain', address: 'bnb1xy2kgdygjrsqtzq2n0yrf2493p83kkf' }
-  ];
-
   const copyToClipboard = async (text: string, label: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -70,10 +104,40 @@ export const WalletModal = ({ type, onClose }: WalletModalProps) => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success(`${type} request submitted successfully!`);
-    onClose();
+    
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        toast.error('You must be logged in to perform this action');
+        return;
+      }
+
+      const data = {
+        ...formData,
+        userId: user.uid,
+        createdAt: new Date().toISOString(),
+        status: 'pending'
+      };
+
+      if (type === 'withdraw') {
+        await addDoc(collection(db, 'withdrawals'), data);
+        toast.success('Withdrawal request submitted successfully!');
+      } else if (type === 'invest') {
+        const selectedInvestmentPlan = investmentOptions.find(o => o.id === selectedPlan);
+        await addDoc(collection(db, 'investments'), {
+          ...data,
+          planDetails: selectedInvestmentPlan,
+        });
+        toast.success('Investment submitted successfully!');
+      }
+      
+      onClose();
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('An error occurred. Please try again.');
+    }
   };
 
   return (
@@ -93,7 +157,13 @@ export const WalletModal = ({ type, onClose }: WalletModalProps) => {
       >
         <div className="p-6 border-b border-border">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold capitalize">{type}</h2>
+            <h2 className="text-2xl font-bold capitalize">
+              {type === 'invest' 
+                ? !selectedPlan 
+                  ? 'Investment Options'
+                  : 'Complete Investment'
+                : type}
+            </h2>
             <Button variant="ghost" size="sm" onClick={onClose}>
               ×
             </Button>
@@ -234,42 +304,164 @@ export const WalletModal = ({ type, onClose }: WalletModalProps) => {
 
           {type === 'invest' && (
             <div className="space-y-6">
-              <p className="text-muted-foreground">
-                Choose a wallet to connect for investing:
-              </p>
-              <div className="grid gap-4">
-                {investmentWallets.map((wallet) => (
-                  <Card key={wallet.id} className="border border-border/50">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-gradient-primary rounded-full flex items-center justify-center">
-                            <Wallet className="h-5 w-5 text-white" />
+              {!selectedPlan ? (
+                // Show investment options first
+                <div>
+                  <p className="text-muted-foreground mb-4">
+                    Choose an investment option to get started:
+                  </p>
+                  <div className="grid grid-cols-1 gap-4">
+                    {investmentOptions.map((option) => (
+                      <Card 
+                        key={option.id}
+                        className="cursor-pointer hover:shadow-card transition-all border border-border/50 hover:border-primary/30"
+                      >
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-between mb-4">
+                            <div>
+                              <h3 className="font-semibold text-lg">{option.name}</h3>
+                              <p className="text-muted-foreground text-sm">{option.description}</p>
+                            </div>
+                            <Badge 
+                              variant="secondary" 
+                              className="bg-primary/10 text-primary border-primary/20"
+                            >
+                              {option.apr} APR
+                            </Badge>
                           </div>
-                          <div>
-                            <div className="font-semibold">{wallet.name}</div>
-                            <div className="text-sm text-muted-foreground font-mono">
-                              {wallet.address.slice(0, 20)}...
+                          <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
+                            <div>
+                              <p className="text-muted-foreground">Minimum</p>
+                              <p className="font-medium">${option.minAmount}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Duration</p>
+                              <p className="font-medium">{option.duration}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Risk Level</p>
+                              <p className="font-medium">{option.riskLevel}</p>
                             </div>
                           </div>
+                          <Button 
+                            className="w-full"
+                            onClick={() => setSelectedPlan(option.id)}
+                          >
+                            Invest Now
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                // After selecting a plan, show wallet addresses and investment form
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold">
+                      Complete Your Investment
+                    </h3>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setSelectedPlan(null)}
+                    >
+                      ← Back
+                    </Button>
+                  </div>
+
+                  <div className="space-y-4">
+                    <p className="text-muted-foreground">
+                      Send your cryptocurrency to any of the addresses below:
+                    </p>
+                    <div className="grid gap-4">
+                      {cryptoAddresses.map((crypto) => (
+                        <Card key={crypto.name} className="border border-border/50">
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-3">
+                                <div className="w-10 h-10 bg-gradient-primary rounded-full flex items-center justify-center text-white font-bold">
+                                  {crypto.icon}
+                                </div>
+                                <div>
+                                  <div className="font-semibold">{crypto.name}</div>
+                                  <div className="text-sm text-muted-foreground font-mono">
+                                    {crypto.address.slice(0, 20)}...
+                                  </div>
+                                </div>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => copyToClipboard(crypto.address, crypto.name)}
+                                className="shrink-0"
+                              >
+                                {copiedAddress === crypto.address ? (
+                                  <Check className="h-4 w-4" />
+                                ) : (
+                                  <Copy className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Card className="border border-border/50 mb-4">
+                    <CardContent className="p-4">
+                      <div className="space-y-2">
+                        <p className="font-semibold">
+                          {investmentOptions.find(o => o.id === selectedPlan)?.name}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {investmentOptions.find(o => o.id === selectedPlan)?.description}
+                        </p>
+                        <div className="flex items-center space-x-2 text-sm">
+                          <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+                            {investmentOptions.find(o => o.id === selectedPlan)?.apr} APR
+                          </Badge>
+                          <span className="text-muted-foreground">•</span>
+                          <span>{investmentOptions.find(o => o.id === selectedPlan)?.duration}</span>
                         </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => copyToClipboard(wallet.address, wallet.name)}
-                          className="shrink-0"
-                        >
-                          {copiedAddress === wallet.address ? (
-                            <Check className="h-4 w-4" />
-                          ) : (
-                            <Copy className="h-4 w-4" />
-                          )}
-                        </Button>
                       </div>
                     </CardContent>
                   </Card>
-                ))}
-              </div>
+
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <Label htmlFor="amount">Investment Amount ($)</Label>
+                      <Input 
+                        id="amount"
+                        type="number"
+                        value={formData.amount}
+                        onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                        required 
+                        min={investmentOptions.find(o => o.id === selectedPlan)?.minAmount}
+                      />
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Minimum: ${investmentOptions.find(o => o.id === selectedPlan)?.minAmount.toLocaleString()}
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="password">Confirm Password</Label>
+                      <Input 
+                        id="password"
+                        type="password"
+                        value={formData.password}
+                        onChange={(e) => setFormData({...formData, password: e.target.value})}
+                        required 
+                      />
+                    </div>
+                    
+                    <Button type="submit" className="w-full">
+                      Confirm Investment
+                    </Button>
+                  </form>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,17 @@ import {
   X,
   ChevronRight
 } from "lucide-react";
+import { auth, db } from "../../lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { toast } from "sonner";
+
+interface UserData {
+  fullName: string;
+  email: string;
+  totalInvestments: number;
+  totalWithdrawals: number;
+}
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -21,6 +32,29 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const userDoc = await getDoc(doc(db, "users", user.uid));
+          if (userDoc.exists()) {
+            setUserData(userDoc.data() as UserData);
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          toast.error("Failed to load user data");
+        }
+      } else {
+        navigate("/");
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [navigate]);
 
   const menuItems = [
     { icon: Home, label: "Home", path: "/dashboard" },
@@ -28,8 +62,15 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { icon: User, label: "Profile", path: "/profile" },
   ];
 
-  const handleLogout = () => {
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      navigate('/');
+      toast.success('Logged out successfully');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Failed to logout');
+    }
   };
 
   const isActive = (path: string) => location.pathname === path;
@@ -77,12 +118,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <div className="flex items-center space-x-3">
               <Avatar className="h-10 w-10">
                 <AvatarFallback className="bg-gradient-primary text-white">
-                  JD
+                  {userData?.fullName?.split(' ').map(n => n[0]).join('') || '??'}
                 </AvatarFallback>
               </Avatar>
               <div>
-                <p className="font-medium">John Doe</p>
-                <p className="text-sm text-muted-foreground">john@example.com</p>
+                <p className="font-medium">{userData?.fullName || 'Loading...'}</p>
+                <p className="text-sm text-muted-foreground">{userData?.email || 'Loading...'}</p>
               </div>
             </div>
           </div>
@@ -144,10 +185,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <div className="hidden lg:flex items-center space-x-3">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback className="bg-gradient-primary text-white text-sm">
-                    JD
+                    {userData?.fullName?.split(' ').map(n => n[0]).join('') || '??'}
                   </AvatarFallback>
                 </Avatar>
-                <span className="font-medium">John Doe</span>
+                <span className="font-medium">{userData?.fullName || 'Loading...'}</span>
               </div>
             </div>
           </div>

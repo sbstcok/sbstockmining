@@ -123,7 +123,7 @@ const Landing = () => {
      <section 
   className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20"
   style={{
-    backgroundImage: "url('https://tse4.mm.bing.net/th/id/OIP.yaDCxr3A0js7IAUJk19TJQHaEo?rs=1&pid=ImgDetMain&o=7&rm=3')",
+    backgroundImage: "url('https://www.merit.com/wp-content/uploads/2018/11/Singapore-City.jpg')",
     backgroundSize: "cover",
     backgroundPosition: "center",
     backgroundRepeat: "no-repeat"
