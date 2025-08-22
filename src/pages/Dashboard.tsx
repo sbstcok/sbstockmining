@@ -92,7 +92,7 @@ const Dashboard = () => {
 
       const ids = Object.values(coinMap).map(coin => coin.id).join(",");
       const response = await fetch(
-        `http://localhost:3000/api/coinmarketcap?slug=${ids}&convert=USD`,
+        `/api/coinmarketcap?slug=${ids}&convert=USD`,
         {
           method: 'GET',
           headers: {
