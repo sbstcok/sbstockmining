@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -8,16 +8,50 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { User, Mail, Globe, Lock, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import { auth, db } from "../../lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 const Profile = () => {
-  const [isEditing, setIsEditing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [userData, setUserData] = useState({
+    fullName: "",
+    email: "",
+    country: "",
+    totalInvestments: 0,
+    totalWithdrawals: 0,
+    createdAt: ""
+  });
+  const [loading, setLoading] = useState(true);
 
-  const handleSave = () => {
-    setIsEditing(false);
-    toast.success("Profile updated successfully!");
-  };
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const user = auth.currentUser;
+        if (!user) return;
+
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          setUserData({
+            fullName: data.fullName || "",
+            email: data.email || "",
+            country: data.country || "",
+            totalInvestments: data.totalInvestments || 0,
+            totalWithdrawals: data.totalWithdrawals || 0,
+            createdAt: data.createdAt || ""
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        toast.error("Failed to load user data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   const handlePasswordChange = () => {
     toast.success("Password changed successfully!");
@@ -51,7 +85,7 @@ const Profile = () => {
                 <div className="flex items-center space-x-4">
                   <Avatar className="h-16 w-16">
                     <AvatarFallback className="bg-gradient-primary text-white text-lg">
-                      JD
+                      {userData.fullName?.split(' ').map(name => name[0]).join('').toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
                   <div>
@@ -59,13 +93,7 @@ const Profile = () => {
                     <CardDescription>Update your personal details</CardDescription>
                   </div>
                 </div>
-                <Button 
-                  className="ml-auto"
-                  variant={isEditing ? "default" : "outline"}
-                  onClick={isEditing ? handleSave : () => setIsEditing(true)}
-                >
-                  {isEditing ? "Save Changes" : "Edit Profile"}
-                </Button>
+                {/* Removed edit button as editing is not allowed */}
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -76,8 +104,8 @@ const Profile = () => {
                     </Label>
                     <Input 
                       id="fullName" 
-                      defaultValue="John Doe"
-                      disabled={!isEditing}
+                      value={userData.fullName}
+                      disabled={true}
                       className="mt-1"
                     />
                   </div>
@@ -90,8 +118,8 @@ const Profile = () => {
                     <Input 
                       id="email" 
                       type="email"
-                      defaultValue="john@example.com"
-                      disabled={!isEditing}
+                      value={userData.email}
+                      disabled={true}
                       className="mt-1"
                     />
                   </div>
@@ -103,8 +131,8 @@ const Profile = () => {
                     </Label>
                     <Input 
                       id="country" 
-                      defaultValue="United States"
-                      disabled={!isEditing}
+                      value={userData.country}
+                      disabled={true}
                       className="mt-1"
                     />
                   </div>
@@ -114,121 +142,9 @@ const Profile = () => {
           </motion.div>
 
           {/* Change Password */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            <Card className="shadow-card">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Lock className="h-5 w-5 mr-2" />
-                  Change Password
-                </CardTitle>
-                <CardDescription>
-                  Update your password to keep your account secure
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="currentPassword">Current Password</Label>
-                  <div className="relative mt-1">
-                    <Input 
-                      id="currentPassword" 
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Enter current password"
-                      className="pr-10"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-                
-                <div>
-                  <Label htmlFor="newPassword">New Password</Label>
-                  <div className="relative mt-1">
-                    <Input 
-                      id="newPassword" 
-                      type={showNewPassword ? "text" : "password"}
-                      placeholder="Enter new password"
-                      className="pr-10"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                      onClick={() => setShowNewPassword(!showNewPassword)}
-                    >
-                      {showNewPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-                
-                <div>
-                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                  <Input 
-                    id="confirmPassword" 
-                    type="password"
-                    placeholder="Confirm new password"
-                    className="mt-1"
-                  />
-                </div>
-                
-                <Button 
-                  onClick={handlePasswordChange}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90"
-                >
-                  Update Password
-                </Button>
-              </CardContent>
-            </Card>
-          </motion.div>
-
+          
           {/* Account Stats */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="shadow-card">
-                <CardContent className="p-6 text-center">
-                  <div className="text-2xl font-bold text-primary">$5,000</div>
-                  <div className="text-sm text-muted-foreground">Total Invested</div>
-                </CardContent>
-              </Card>
-              
-              <Card className="shadow-card">
-                <CardContent className="p-6 text-center">
-                  <div className="text-2xl font-bold text-success">+$750</div>
-                  <div className="text-sm text-muted-foreground">Total Returns</div>
-                </CardContent>
-              </Card>
-              
-              <Card className="shadow-card">
-                <CardContent className="p-6 text-center">
-                  <div className="text-2xl font-bold text-secondary">3</div>
-                  <div className="text-sm text-muted-foreground">Active Plans</div>
-                </CardContent>
-              </Card>
-            </div>
-          </motion.div>
+         
         </div>
       </DashboardLayout>
     </motion.div>

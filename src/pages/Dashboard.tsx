@@ -15,14 +15,17 @@ import {
 } from "lucide-react";
 import { WalletModal } from "@/components/WalletModal";
 import { auth, db } from "../../lib/firebase";
-import { collection, query, where, getDocs, DocumentData } from "firebase/firestore";
+import { collection, query, where, getDocs, DocumentData, doc, getDoc } from "firebase/firestore";
 
 const Dashboard = () => {
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [modalType, setModalType] = useState<'deposit' | 'withdraw' | 'invest' | null>(null);
   const [cryptoData, setCryptoData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userData, setUserData] = useState<{ fullName: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [hasFetched, setHasFetched] = useState(false); // Track if fetch has been attempted
+
   interface CoinData {
     name: string;
     symbol: string;
@@ -45,17 +48,107 @@ const Dashboard = () => {
   const [userWithdrawals, setUserWithdrawals] = useState<TransactionData[]>([]);
   const [totalBalance, setTotalBalance] = useState(0);
 
-  // Map of display names to CoinGecko IDs
+  // Map of display names to CoinMarketCap IDs
   const coinMap: CoinMap = useMemo(() => ({
     BTC: { name: "Bitcoin", symbol: "BTC", id: "bitcoin" },
     ETH: { name: "Ethereum", symbol: "ETH", id: "ethereum" },
     SOL: { name: "Solana", symbol: "SOL", id: "solana" },
     ADA: { name: "Cardano", symbol: "ADA", id: "cardano" },
-    MATIC: { name: "Polygon", symbol: "MATIC", id: "matic-network" },
+    MATIC: { name: "Polygon", symbol: "MATIC", id: "polygon" },
     LINK: { name: "Chainlink", symbol: "LINK", id: "chainlink" }
   }), []);
 
-  // Fetch real-time crypto prices
+  // Sample data to use on error
+  const sampleData = {
+    bitcoin: { usd: 29850, usd_24h_change: 2.5 },
+    ethereum: { usd: 1780, usd_24h_change: 1.8 },
+    solana: { usd: 21.5, usd_24h_change: 3.2 },
+    cardano: { usd: 0.28, usd_24h_change: -1.5 },
+    polygon: { usd: 0.58, usd_24h_change: 0.9 },
+    chainlink: { usd: 6.2, usd_24h_change: 1.2 }
+  };
+
+  // Function to format sample data
+  const formatSampleData = () => {
+    return Object.keys(coinMap).map(symbol => {
+      const coin = coinMap[symbol];
+      const price = sampleData[coin.id]?.usd || 0;
+      const change = sampleData[coin.id]?.usd_24h_change || 0;
+      return {
+        name: coin.name,
+        symbol: coin.symbol,
+        price: parseFloat(price.toFixed(2)),
+        change: parseFloat(Math.abs(change).toFixed(2)),
+        positive: change >= 0
+      };
+    });
+  };
+
+  // Fetch crypto data
+  const fetchCryptoData = async () => {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+      const ids = Object.values(coinMap).map(coin => coin.id).join(",");
+      const response = await fetch(
+        `http://localhost:3000/api/coinmarketcap?slug=${ids}&convert=USD`,
+        {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          },
+          signal: controller.signal
+        }
+      );
+
+      clearTimeout(timeoutId);
+
+      if (response.status === 429 || !response.ok) {
+        return formatSampleData();
+      }
+
+      const data = await response.json();
+
+      // Transform API data
+      return Object.keys(coinMap).map(symbol => {
+        const coin = coinMap[symbol];
+        const coinData = data.data[coin.id];
+        const price = coinData?.quote.USD.price || 0;
+        const change = coinData?.quote.USD.percent_change_24h || 0;
+        return {
+          name: coin.name,
+          symbol: coin.symbol,
+          price: parseFloat(price.toFixed(2)),
+          change: parseFloat(Math.abs(change).toFixed(2)),
+          positive: change >= 0
+        };
+      });
+    } catch (error) {
+      console.error("FetchCryptoData error:", error);
+      return formatSampleData();
+    }
+  };
+
+  // Fetch user data
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const user = auth.currentUser;
+        if (!user) return;
+        
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          setUserData(userDoc.data() as { fullName: string });
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+    
+    fetchUserData();
+  }, []);
+
   // Fetch user's investments and withdrawals
   useEffect(() => {
     const fetchUserData = async () => {
@@ -87,9 +180,13 @@ const Dashboard = () => {
         })) as TransactionData[];
         setUserWithdrawals(withdrawals);
 
-        // Calculate total balance
-        const totalInvestments = investments.reduce((sum, inv) => sum + Number(inv.amount), 0);
-        const totalWithdrawals = withdrawals.reduce((sum, wd) => sum + Number(wd.amount), 0);
+        // Calculate total balance - only count approved transactions
+        const totalInvestments = investments
+          .filter(inv => inv.status === 'approved')
+          .reduce((sum, inv) => sum + Number(inv.amount), 0);
+        const totalWithdrawals = withdrawals
+          .filter(wd => wd.status === 'approved')
+          .reduce((sum, wd) => sum + Number(wd.amount), 0);
         setTotalBalance(totalInvestments - totalWithdrawals);
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -100,50 +197,29 @@ const Dashboard = () => {
     fetchUserData();
   }, []);
 
+  // Fetch real-time crypto prices
   useEffect(() => {
+    if (hasFetched) return; // Prevent refetching if already attempted
+
     const fetchPrices = async () => {
+      setHasFetched(true); // Mark as fetched
       try {
         setLoading(true);
         setError(null);
 
-        const ids = Object.values(coinMap).map(coin => coin.id).join(",");
-        const response = await fetch(
-          `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch prices");
-        }
-
-        const data = await response.json();
-
-        // Transform API data to match cryptoData format
-        const formattedData = Object.keys(coinMap).map(symbol => {
-          const coin = coinMap[symbol];
-          const price = data[coin.id]?.usd || 0;
-          const change = data[coin.id]?.usd_24h_change || 0;
-          return {
-            name: coin.name,
-            symbol: coin.symbol,
-            price: parseFloat(price.toFixed(2)),
-            change: parseFloat(Math.abs(change).toFixed(2)),
-            positive: change >= 0
-          };
-        });
-
-        setCryptoData(formattedData);
-        setLoading(false);
+        const data = await fetchCryptoData();
+        setCryptoData(data);
+        setError(null);
       } catch (err) {
-        setError("Unable to fetch real-time prices. Please try again later.");
+        console.error("Fetch error:", err);
+        setCryptoData(formatSampleData());
+        setError("Using sample data due to API issues");
+      } finally {
         setLoading(false);
       }
     };
 
     fetchPrices();
-
-    // Optional: Poll every 60 seconds for updated prices
-    const interval = setInterval(fetchPrices, 60000);
-    return () => clearInterval(interval);
   }, [coinMap]);
 
   return (
@@ -155,7 +231,9 @@ const Dashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="text-3xl font-bold mb-2">Welcome back, John!</h1>
+          <h1 className="text-3xl font-bold mb-2">
+            Welcome back, {auth.currentUser?.displayName || auth.currentUser?.email?.split('@')[0] || 'Investor'}!
+          </h1>
           <p className="text-muted-foreground">Here's your investment overview</p>
         </motion.div>
 

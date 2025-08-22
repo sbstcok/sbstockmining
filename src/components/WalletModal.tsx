@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Copy, Check, Wallet, CreditCard, Building2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import {auth, db, addDoc, collection } from "../../lib/firebase";
+import {auth, db, addDoc, collection, getDoc, doc } from "../../lib/firebase";
 interface WalletModalProps {
   type: 'deposit' | 'withdraw' | 'invest';
   onClose: () => void;
@@ -114,11 +114,26 @@ export const WalletModal = ({ type, onClose }: WalletModalProps) => {
         return;
       }
 
+      const amount = parseFloat(formData.amount);
+      
+      if (type === 'withdraw') {
+        // Check if withdrawal amount exceeds balance
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const userData = userDoc.data();
+        const currentBalance = userData?.totalInvestments - userData?.totalWithdrawals || 0;
+        
+        if (amount > currentBalance) {
+          toast.error('Insufficient balance for this withdrawal');
+          return;
+        }
+      }
+
       const data = {
         ...formData,
         userId: user.uid,
         createdAt: new Date().toISOString(),
-        status: 'pending'
+        status: 'pending',
+        amount: amount
       };
 
       if (type === 'withdraw') {
@@ -131,7 +146,15 @@ export const WalletModal = ({ type, onClose }: WalletModalProps) => {
           planDetails: selectedInvestmentPlan,
         });
         toast.success('Investment submitted successfully!');
+      } else if (type === 'deposit') {
+        await addDoc(collection(db, 'deposits'), data);
+        toast.success('Deposit submitted successfully!');
       }
+      
+      // Show confirmation modal
+      toast.info('Your balance will be updated once the transaction is confirmed', {
+        duration: 5000,
+      });
       
       onClose();
     } catch (error) {

@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { WalletModal } from "@/components/WalletModal";
 import { 
   TrendingUp, 
   Shield, 
@@ -14,6 +16,9 @@ import {
 import { toast } from "sonner";
 
 const InvestmentPlans = () => {
+  const [showInvestModal, setShowInvestModal] = useState(false);
+  const [selectedPlanAmount, setSelectedPlanAmount] = useState(0);
+  
   const plans = [
     {
       name: "Starter Plan",
@@ -63,7 +68,8 @@ const InvestmentPlans = () => {
   ];
 
   const handleSubscribe = (planName: string, price: number) => {
-    toast.success(`Successfully subscribed to ${planName}!`);
+    setSelectedPlanAmount(price);
+    setShowInvestModal(true);
   };
 
   return (
@@ -198,6 +204,14 @@ const InvestmentPlans = () => {
             </div>
           </motion.div>
         </div>
+
+        {/* Investment Modal */}
+        {showInvestModal && (
+          <WalletModal
+            type="invest"
+            onClose={() => setShowInvestModal(false)}
+          />
+        )}
       </DashboardLayout>
     </motion.div>
   );
