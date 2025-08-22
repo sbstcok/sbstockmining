@@ -109,7 +109,7 @@ const Dashboard = () => {
       }
 
       const data = await response.json();
-
+      // more of this
       // Transform API data
       return Object.keys(coinMap).map(symbol => {
         const coin = coinMap[symbol];
