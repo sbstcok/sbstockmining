@@ -50,13 +50,13 @@ const Dashboard = () => {
     status: string;
   }
 
-  // Map of display names to CoinMarketCap IDs
+  // Map of display names to CoinGecko IDs
   const coinMap: CoinMap = useMemo(() => ({
     BTC: { name: "Bitcoin", symbol: "BTC", id: "bitcoin" },
     ETH: { name: "Ethereum", symbol: "ETH", id: "ethereum" },
     SOL: { name: "Solana", symbol: "SOL", id: "solana" },
     ADA: { name: "Cardano", symbol: "ADA", id: "cardano" },
-    MATIC: { name: "Polygon", symbol: "MATIC", id: "polygon" },
+    MATIC: { name: "Polygon", symbol: "MATIC", id: "matic-network" },
     LINK: { name: "Chainlink", symbol: "LINK", id: "chainlink" }
   }), []);
 
@@ -66,7 +66,7 @@ const Dashboard = () => {
     ethereum: { usd: 1780, usd_24h_change: 1.8 },
     solana: { usd: 21.5, usd_24h_change: 3.2 },
     cardano: { usd: 0.28, usd_24h_change: -1.5 },
-    polygon: { usd: 0.58, usd_24h_change: 0.9 },
+    'matic-network': { usd: 0.58, usd_24h_change: 0.9 },
     chainlink: { usd: 6.2, usd_24h_change: 1.2 }
   };
 
@@ -86,7 +86,7 @@ const Dashboard = () => {
     });
   };
 
-  // Fetch crypto data
+  // Fetch crypto data from CoinGecko
   const fetchCryptoData = async () => {
     try {
       const controller = new AbortController();
@@ -94,7 +94,7 @@ const Dashboard = () => {
 
       const ids = Object.values(coinMap).map(coin => coin.id).join(",");
       const response = await fetch(
-        `/api/coinmarketcap?slug=${ids}&convert=USD`,
+        `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=24h`,
         {
           method: 'GET',
           headers: {
@@ -106,20 +106,8 @@ const Dashboard = () => {
 
       clearTimeout(timeoutId);
 
-      if (response.status === 429) {
-        console.warn("Rate limit exceeded, using sample data");
-        return formatSampleData();
-      }
-
       if (!response.ok) {
         console.error(`HTTP error: ${response.status} ${response.statusText}`);
-        return formatSampleData();
-      }
-
-      // Check if response is JSON
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        console.error("Received non-JSON response, likely proxy misconfiguration");
         return formatSampleData();
       }
 
@@ -128,9 +116,9 @@ const Dashboard = () => {
       // Transform API data
       return Object.keys(coinMap).map(symbol => {
         const coin = coinMap[symbol];
-        const coinData = data.data[coin.id];
-        const price = coinData?.quote.USD.price || 0;
-        const change = coinData?.quote.USD.percent_change_24h || 0;
+        const coinData = data.find((item) => item.id === coin.id);
+        const price = coinData?.current_price || 0;
+        const change = coinData?.price_change_percentage_24h || 0;
         return {
           name: coin.name,
           symbol: coin.symbol,
@@ -148,9 +136,9 @@ const Dashboard = () => {
   // Logout function
   const handleLogout = async () => {
     try {
-      setLoading(true); // Show loading to prevent UI interaction
+      setLoading(true);
       await signOut(auth);
-      navigate("/login"); // Redirect to login page
+      navigate("/login");
     } catch (error) {
       console.error("Logout error:", error.message);
       setError("Failed to log out, please try again");
@@ -170,16 +158,14 @@ const Dashboard = () => {
         let fetchedUserData = null;
         let fetchedInvestments = [];
         let fetchedWithdrawals = [];
-        let fetchedCryptoData = formatSampleData(); // Default to sample data
+        let fetchedCryptoData = formatSampleData();
 
         if (user) {
-          // Fetch user data
           const userDoc = await getDoc(doc(db, "users", user.uid));
           if (userDoc.exists()) {
             fetchedUserData = userDoc.data();
           }
 
-          // Fetch investments
           const investmentsQuery = query(
             collection(db, "investments"),
             where("userId", "==", user.uid)
@@ -190,7 +176,6 @@ const Dashboard = () => {
             ...doc.data()
           })) as TransactionData[];
 
-          // Fetch withdrawals
           const withdrawalsQuery = query(
             collection(db, "withdrawals"),
             where("userId", "==", user.uid)
@@ -202,16 +187,13 @@ const Dashboard = () => {
           })) as TransactionData[];
         }
 
-        // Fetch crypto data
         fetchedCryptoData = await fetchCryptoData();
 
-        // Update all state at once
         setUserData(fetchedUserData);
         setUserInvestments(fetchedInvestments);
         setUserWithdrawals(fetchedWithdrawals);
         setCryptoData(fetchedCryptoData);
 
-        // Calculate total balance
         const totalInvestments = fetchedInvestments
           .filter(inv => inv.status === 'approved')
           .reduce((sum, inv) => sum + Number(inv.amount), 0);
