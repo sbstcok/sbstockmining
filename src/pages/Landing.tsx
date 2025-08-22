@@ -31,7 +31,7 @@ const Landing = () => {
             <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
               <TrendingUp className="h-5 w-5 text-white" />
             </div>
-            <span className="text-xl font-bold">InvestPro</span>
+            <span className="text-xl font-bold">SB Crypto</span>
           </div>
 
           {/* Desktop Navigation */}
@@ -57,7 +57,7 @@ const Landing = () => {
           </nav>
 
           <div className="flex items-center space-x-4">
-            <ThemeToggle />
+            {/* <ThemeToggle /> */}
             <div className="hidden md:flex items-center space-x-3">
               <Button variant="outline" onClick={() => navigate('/onboarding')}>
                 Login
@@ -120,10 +120,21 @@ const Landing = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
-        <div className="absolute inset-0 bg-gradient-hero opacity-5" />
+     <section 
+  className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20"
+  style={{
+    backgroundImage: "url('https://tse4.mm.bing.net/th/id/OIP.yaDCxr3A0js7IAUJk19TJQHaEo?rs=1&pid=ImgDetMain&o=7&rm=3')",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat"
+  }}
+>
+  {/* Dark overlay - make it lighter */}
+  <div className="absolute inset-0 bg-black/10 z-[1]" /> 
+  <div className="absolute inset-0 bg-gradient-hero opacity-20 z-[2]" />
+
         
-        <div className="container mx-auto px-6 text-center relative z-10">
+        <div className="container mx-auto px-6 text-center relative z-[3]">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -131,21 +142,21 @@ const Landing = () => {
             className="max-w-4xl mx-auto"
           >
             <motion.h1 
-              className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-hero bg-clip-text text-transparent"
+              className="text-5xl md:text-7xl font-bold mb-6 text-white"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-              Smart Investments Made Simple
+            Crypto Mining & Stock Trading
             </motion.h1>
             
             <motion.p 
-              className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-2xl mx-auto"
+              className="text-xl md:text-2xl text-white mb-12 max-w-2xl mx-auto"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
-              Join thousands of investors building wealth with our intelligent investment platform
+              Join the future of digital investment with our state-of-the-art crypto mining and professional stock trading services
             </motion.p>
             
             <motion.div 
@@ -162,15 +173,7 @@ const Landing = () => {
                 Get Started
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
-              
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => navigate('/onboarding')}
-                className="px-8 py-4 text-lg font-semibold rounded-xl border-2 border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all duration-300"
-              >
-                Login
-              </Button>
+          
             </motion.div>
           </motion.div>
         </div>
@@ -204,8 +207,8 @@ const Landing = () => {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-24 px-6">
-        <div className="container mx-auto">
+      <section id="features" className="py-24">
+        <div className="container mx-auto px-[25px] md:px-6">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -257,21 +260,9 @@ const Landing = () => {
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-24 px-6 bg-muted/30">
+      <section id="about" className="py-14 -mt-10 px-6 bg-muted/30">
         <div className="container mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">About InvestPro</h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              We're revolutionizing the investment landscape with cutting-edge technology, 
-              expert insights, and a commitment to making wealth building accessible to everyone.
-            </p>
-          </motion.div>
+          
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <motion.div
@@ -332,9 +323,26 @@ const Landing = () => {
         </div>
       </section>
 
+                  <motion.div 
+              className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+            >
+              <Button
+                size="lg"
+                onClick={() => navigate('/onboarding')}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-4 text-lg font-semibold rounded-xl shadow-glow transition-all duration-300 hover:shadow-elevated group"
+              >
+                Get Started
+                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </Button>
+          
+            </motion.div>
+
       {/* Stats Section */}
-      <section id="stats" className="py-24 px-6">
-        <div className="container mx-auto">
+      <section id="stats" className="py-14">
+        <div className="container mx-auto px-[25px] md:px-6">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -344,7 +352,7 @@ const Landing = () => {
           >
             <h2 className="text-4xl md:text-5xl font-bold mb-6">Platform Statistics</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              See why thousands of investors trust InvestPro with their financial future
+              See why thousands of investors trust SB crypto and stocks mining with their financial future
             </p>
           </motion.div>
 
@@ -388,6 +396,130 @@ const Landing = () => {
           </div>
         </div>
       </section>
+
+      {/* Our Services Section */}
+     <section id="stats" className="py-14">
+        <div className="container mx-auto px-[25px] md:px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">Our Services</h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Comprehensive solutions for your crypto and stock investment needs
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                title: "Crypto Mining",
+                description: "Professional cryptocurrency mining services with state-of-the-art hardware and optimal energy efficiency",
+                image: "https://cdn.mos.cms.futurecdn.net/fbS5kjGRT4umPC7ZyhABu5.jpg"
+              },
+              {
+                title: "Stock Trading",
+                description: "Expert stock market analysis and trading services with real-time market insights",
+                image: "https://th.bing.com/th/id/R.a75f26564e6aa4ea6ea849dcbc472f46?rik=A%2bKLsOyZWdLT4w&pid=ImgRaw&r=0"
+              },
+              {
+                title: "Investment Advisory",
+                description: "Personalized investment strategies tailored to your financial goals and risk tolerance",
+                image: "https://tse3.mm.bing.net/th/id/OIP.PKA-2b1mqaI4ugoMTty-kAHaE8?rs=1&pid=ImgDetMain&o=7&rm=3"
+              }
+            ].map((service, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, delay: index * 0.2 }}
+                className="bg-card overflow-hidden rounded-2xl shadow-card hover:shadow-elevated transition-all duration-300 border border-border/50"
+              >
+                <div className="h-48 relative">
+                  <img 
+                    src={service.image} 
+                    alt={service.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="p-6">
+                  <h3 className="text-xl font-semibold mb-4">{service.title}</h3>
+                  <p className="text-muted-foreground">{service.description}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+                  <motion.div 
+              className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+            >
+              <Button
+                size="lg"
+                onClick={() => navigate('/onboarding')}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-4 text-lg font-semibold rounded-xl shadow-glow transition-all duration-300 hover:shadow-elevated group mb-10"
+              >
+                Get Started
+                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </Button>
+          
+            </motion.div>
+
+      {/* Footer */}
+      <footer className="bg-background border-t border-border">
+        <div className="container mx-auto px-6 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
+                  <TrendingUp className="h-5 w-5 text-white" />
+                </div>
+                <span className="text-xl font-bold">SB Crypto</span>
+              </div>
+              <p className="text-muted-foreground">
+                Your trusted partner in crypto mining and stock trading
+              </p>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold mb-4">Quick Links</h4>
+              <ul className="space-y-2">
+                <li><button onClick={() => scrollToSection('features')} className="text-muted-foreground hover:text-primary">Features</button></li>
+                <li><button onClick={() => scrollToSection('about')} className="text-muted-foreground hover:text-primary">About</button></li>
+                <li><button onClick={() => scrollToSection('services')} className="text-muted-foreground hover:text-primary">Services</button></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold mb-4">Contact</h4>
+              <ul className="space-y-2 text-muted-foreground">
+                <li>Toronto, Canada</li>
+                <li>Support: +1 840-219-5113</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold mb-4">Legal</h4>
+              <ul className="space-y-2">
+                <li><a href="#" className="text-muted-foreground hover:text-primary">Privacy Policy</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-primary">Terms of Service</a></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="border-t border-border mt-12 pt-8 text-center text-muted-foreground">
+            <p>&copy; {new Date().getFullYear()} SB Crypto & Stocks Mining. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </motion.div>
   );
 };
