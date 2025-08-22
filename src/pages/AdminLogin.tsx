@@ -59,11 +59,16 @@ const AdminLogin = () => {
           const adminDoc = await getDoc(doc(db, "admins", user.uid));
           if (adminDoc.exists() && adminDoc.data().isAdmin) {
             sessionStorage.setItem("adminAuth", "true");
+            sessionStorage.setItem("adminToken", user.uid);
+            sessionStorage.setItem("isAdmin", "true");
             toast.success("Admin login successful!");
             const from = location.state?.from?.pathname || "/admin";
-            navigate(from);
+            navigate(from, { replace: true });
           } else {
             await auth.signOut();
+            sessionStorage.removeItem("adminAuth");
+            sessionStorage.removeItem("adminToken");
+            sessionStorage.removeItem("isAdmin");
             toast.error("You are not authorized to access the admin dashboard");
           }
         } catch (loginError) {

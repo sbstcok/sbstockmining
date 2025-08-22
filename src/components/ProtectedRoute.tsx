@@ -14,22 +14,25 @@ const ProtectedRoute = ({ children, requireAuth = true, adminOnly = false }: Pro
   const location = useLocation();
 
   useEffect(() => {
-    // Check authentication status (you can implement your own auth logic here)
+    // Check authentication status
     const checkAuth = () => {
       // For admin routes, check sessionStorage
       if (adminOnly) {
+        const adminToken = sessionStorage.getItem('adminToken');
         const isAdminUser = sessionStorage.getItem('isAdmin') === 'true';
-        setIsAdmin(isAdminUser);
-        setIsAuthenticated(isAdminUser);
+        setIsAdmin(isAdminUser && !!adminToken);
+        setIsAuthenticated(isAdminUser && !!adminToken);
       } else {
-        // For regular auth, implement your own logic here
-        setIsAuthenticated(true); // Temporarily set to true
+        // For regular client auth, check localStorage
+        const clientToken = localStorage.getItem('clientToken');
+        const isClientLoggedIn = localStorage.getItem('isClientLoggedIn') === 'true';
+        setIsAuthenticated(isClientLoggedIn && !!clientToken);
       }
       setLoading(false);
     };
 
     checkAuth();
-  }, [adminOnly]);
+  }, [adminOnly, location.pathname]);
 
   if (loading) {
     return null; // or a loading spinner

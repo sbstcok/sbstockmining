@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { db } from "../../lib/firebase";
+import { auth, db } from "../../lib/firebase";
 import { collection, getDocs, doc, updateDoc, getDoc, query, where } from "firebase/firestore";
 import { toast } from "sonner";
 
@@ -36,13 +36,25 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     // Check admin authentication
-    const isAdmin = sessionStorage.getItem("adminAuth");
-    if (!isAdmin) {
-      navigate("/admin");
-      return;
-    }
+    const checkAdminAuth = async () => {
+      const adminToken = sessionStorage.getItem("adminToken");
+      const isAdmin = sessionStorage.getItem("isAdmin") === "true";
+      const adminAuth = sessionStorage.getItem("adminAuth");
 
-    fetchUsers();
+      if (!adminToken || !isAdmin || !adminAuth) {
+        // Clear any partial admin session data
+        sessionStorage.removeItem("adminAuth");
+        sessionStorage.removeItem("adminToken");
+        sessionStorage.removeItem("isAdmin");
+        
+        navigate("/admin/login", { replace: true });
+        return;
+      }
+
+      await fetchUsers();
+    };
+
+    checkAdminAuth();
   }, [navigate]);
 
   const fetchUsers = async () => {
@@ -136,10 +148,24 @@ const AdminDashboard = () => {
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
           <Button
             variant="outline"
-            onClick={() => {
-              sessionStorage.removeItem("adminAuth");
-              navigate("/admin");
-              window.location.reload(); // Force a reload to clear any cached states
+            onClick={async () => {
+              try {
+                // Clear all admin-related session storage
+                sessionStorage.removeItem("adminAuth");
+                sessionStorage.removeItem("adminToken");
+                sessionStorage.removeItem("isAdmin");
+                
+                // Sign out from Firebase if needed
+                if (auth.currentUser) {
+                  await auth.signOut();
+                }
+                
+                toast.success("Logged out successfully");
+                navigate("/admin/login", { replace: true });
+              } catch (error) {
+                console.error("Logout error:", error);
+                toast.error("Failed to logout");
+              }
             }}
           >
             Logout

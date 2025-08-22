@@ -27,9 +27,11 @@ const Onboarding = () => {
     setLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      localStorage.setItem('clientToken', userCredential.user.uid);
+      localStorage.setItem('isClientLoggedIn', 'true');
       toast.success("Successfully logged in!");
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });
     } catch (error: unknown) {
       console.error("Sign in error:", error);
       if (error instanceof Error) {

@@ -38,6 +38,17 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
+        const clientToken = localStorage.getItem('clientToken');
+        const adminToken = sessionStorage.getItem('adminToken');
+        
+        // Verify if the user is properly authenticated
+        if (!clientToken && !adminToken) {
+          await auth.signOut();
+          navigate('/', { replace: true });
+          setLoading(false);
+          return;
+        }
+
         try {
           const userDoc = await getDoc(doc(db, "users", user.uid));
           if (userDoc.exists()) {
@@ -48,12 +59,22 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           toast.error("Failed to load user data");
         }
       } else {
-        navigate("/");
+        // Clear all auth states when user is not authenticated
+        localStorage.removeItem('clientToken');
+        localStorage.removeItem('isClientLoggedIn');
+        sessionStorage.removeItem('adminToken');
+        sessionStorage.removeItem('adminAuth');
+        sessionStorage.removeItem('isAdmin');
+        setUserData(null);
+        navigate('/', { replace: true });
       }
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      setLoading(true); // Reset loading state when unmounting
+    };
   }, [navigate]);
 
   const menuItems = [
@@ -64,9 +85,23 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   const handleLogout = async () => {
     try {
+      // Clear all auth states first
+      localStorage.removeItem('clientToken');
+      localStorage.removeItem('isClientLoggedIn');
+      sessionStorage.removeItem('adminToken');
+      sessionStorage.removeItem('adminAuth');
+      sessionStorage.removeItem('isAdmin');
+      
+      // Sign out from Firebase
       await auth.signOut();
-      navigate('/');
+      
+      // Clear component state
+      setUserData(null);
+      setSidebarOpen(false);
+      
+      // Show success message and navigate
       toast.success('Logged out successfully');
+      navigate('/', { replace: true });
     } catch (error) {
       console.error('Logout error:', error);
       toast.error('Failed to logout');
