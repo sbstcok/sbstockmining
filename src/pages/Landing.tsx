@@ -196,7 +196,7 @@ const Landing = () => {
               <Button variant="outline" onClick={() => navigate('/onboarding')}>
                 Login
               </Button>
-              <Button onClick={() => navigate('/onboarding')}>
+              <Button className="bg-[#CCAC53]" onClick={() => navigate('/onboarding')}>
                 Get Started
               </Button>
             </div>
@@ -204,7 +204,7 @@ const Landing = () => {
             <Button
               variant="ghost"
               size="sm"
-              className="md:hidden bg-blue-600 text-white"
+              className="md:hidden bg-[#094C79] text-white"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -248,7 +248,7 @@ const Landing = () => {
                 <Button variant="outline" onClick={() => navigate('/onboarding')}>
                   Login
                 </Button>
-                <Button onClick={() => navigate('/onboarding')}>
+                <Button className="bg-[#CCAC53]" onClick={() => navigate('/onboarding')}>
                   Get Started
                 </Button>
               </div>
@@ -309,7 +309,7 @@ const Landing = () => {
               <Button
                 size="lg"
                 onClick={() => navigate('/onboarding')}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-4 text-lg font-semibold rounded-xl shadow-glow transition-all duration-300 hover:shadow-elevated group"
+                className="bg-[#CCAC53] text-primary-foreground hover:bg-primary/90 px-8 py-4 text-lg font-semibold rounded-xl shadow-glow transition-all duration-300 hover:shadow-elevated group"
               >
                 Get Started
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -369,7 +369,7 @@ const Landing = () => {
                     key={index}
                     className="flex items-center space-x-3 min-w-[160px] sm:min-w-[200px] flex-shrink-0"
                   >
-                    <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center">
+                    <div className="w-8 h-8 bg-[#094C79] rounded-full flex items-center justify-center">
                       <span className="text-white text-xs font-bold">
                         {crypto.symbol.slice(0, 2)}
                       </span>
@@ -510,7 +510,7 @@ const Landing = () => {
                 key={index}
                 className="bg-card p-8 rounded-2xl shadow-card hover:shadow-elevated transition-all duration-300 border border-border/50"
               >
-                <div className="bg-gradient-primary w-14 h-14 rounded-xl flex items-center justify-center mb-6">
+                <div className="bg-[#CCAC53] w-14 h-14 rounded-xl flex items-center justify-center mb-6">
                   <feature.icon className="h-7 w-7 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold mb-4">{feature.title}</h3>
@@ -555,19 +555,19 @@ const Landing = () => {
             >
               <div className="grid grid-cols-2 gap-6">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-primary mb-2">50K+</div>
+                  <div className="text-3xl font-bold text-[#094C79] mb-2">50K+</div>
                   <div className="text-sm text-muted-foreground">Active Users</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-primary mb-2">$2.5B+</div>
+                  <div className="text-3xl font-bold text-[#094C79] mb-2">$2.5B+</div>
                   <div className="text-sm text-muted-foreground">Assets Managed</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-primary mb-2">99.9%</div>
+                  <div className="text-3xl font-bold text-[#094C79] mb-2">99.9%</div>
                   <div className="text-sm text-muted-foreground">Uptime</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-primary mb-2">4.9★</div>
+                  <div className="text-3xl font-bold text-[#094C79] mb-2">4.9★</div>
                   <div className="text-sm text-muted-foreground">User Rating</div>
                 </div>
               </div>
@@ -613,10 +613,10 @@ const Landing = () => {
                 key={index}
                 className="bg-card p-8 rounded-2xl shadow-card hover:shadow-elevated transition-all duration-300 border border-border/50 text-center"
               >
-                <div className="bg-gradient-primary w-16 h-16 rounded-xl flex items-center justify-center mb-6 mx-auto">
+                <div className="bg-[#CCAC53] w-16 h-16 rounded-xl flex items-center justify-center mb-6 mx-auto">
                   <stat.icon className="h-8 w-8 text-white" />
                 </div>
-                <div className="text-4xl font-bold text-primary mb-2">{stat.value}</div>
+                <div className="text-4xl font-bold text-[#094C79] mb-2">{stat.value}</div>
                 <h3 className="text-lg font-semibold mb-2">{stat.label}</h3>
                 <p className="text-muted-foreground text-sm">{stat.description}</p>
               </motion.div>
@@ -685,7 +685,7 @@ const Landing = () => {
         <Button
           size="lg"
           onClick={() => navigate('/onboarding')}
-          className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-4 text-lg font-semibold rounded-xl shadow-glow transition-all duration-300 hover:shadow-elevated group mb-10"
+          className="bg-[#CCAC53] text-primary-foreground hover:bg-primary/90 px-8 py-4 text-lg font-semibold rounded-xl shadow-glow transition-all duration-300 hover:shadow-elevated group mb-10"
         >
           Get Started
           <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
