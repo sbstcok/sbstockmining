@@ -739,6 +739,7 @@ const Landing = () => {
           </div>
         </div>
       </footer>
+      {/* commit message */}
     </motion.div>
   );
 };
