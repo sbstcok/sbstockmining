@@ -136,40 +136,39 @@ const Dashboard = () => {
 
         {/* Balance Card */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.6, delay: 0.1 }}
+>
+  <Card className="bg-gradient-primary text-white shadow-glow border-0">
+    <CardHeader className="pb-2">
+      <div className="flex items-center justify-between">
+        <CardTitle className="text-lg font-medium text-white/90">Total Balance</CardTitle>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setBalanceVisible(!balanceVisible)}
+          className="text-white/90 hover:text-white hover:bg-white/10"
         >
-          <Card className="bg-gradient-primary text-white shadow-glow border-0">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-medium text-white/90">Total Balance</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setBalanceVisible(!balanceVisible)}
-                  className="text-white/90 hover:text-white hover:bg-white/10"
-                >
-                  {balanceVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold mb-4 text-white">
-                {balanceVisible 
-                  ? userLoading 
-                    ? "Loading..." 
-                    : `$${((userData?.totalInvestments || 0) - (userData?.totalWithdrawals || 0)).toFixed(2)}`
-                  : "••••••"}
-              </div>
-              <div className="flex items-center space-x-2 text-white/80 mb-6">
-                <ArrowUpRight className="h-4 w-4" />
-                <span className="text-sm">+12.5% from last month</span>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
+          {balanceVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+        </Button>
+      </div>
+    </CardHeader>
+    <CardContent>
+      <div className="text-4xl font-bold mb-4 text-white">
+        {balanceVisible 
+          ? userLoading 
+            ? "Loading..." 
+            : `$${((userData?.totalInvestments || 0) - (userData?.totalWithdrawals || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          : "••••••"}
+      </div>
+      <div className="flex items-center space-x-2 text-white/80 mb-6">
+        <ArrowUpRight className="h-4 w-4" />
+        <span className="text-sm">+12.5% from last month</span>
+      </div>
+    </CardContent>
+  </Card>
+</motion.div>
         {/* Action Buttons */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
