@@ -429,7 +429,6 @@ const Landing = () => {
       </section>
 
       {/* Testimonials Section */}
-{/* Testimonials Section */}
 <section className="py-14 bg-muted/30">
   <div className="container mx-auto px-4 sm:px-6">
     <motion.div
@@ -437,7 +436,7 @@ const Landing = () => {
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ duration: 1.5 }}
+      transition={{ duration: 0.2 }}
     >
       <h2 className="text-4xl md:text-5xl font-bold mb-6">What Our Investors Say</h2>
       <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
@@ -447,7 +446,7 @@ const Landing = () => {
     <div className="relative overflow-hidden" aria-live="polite">
       <motion.div
         animate={{ x: ['0%', '-50%'] }}
-        transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+        transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
         className="flex space-x-4 whitespace-nowrap"
         style={{ minWidth: '200%' }}
       >
@@ -472,7 +471,6 @@ const Landing = () => {
     </div>
   </div>
 </section>
-
       {/* Features Section */}
       <section id="features" className="py-24">
         <div className="container mx-auto px-4 sm:px-6">
