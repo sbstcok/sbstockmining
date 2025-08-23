@@ -429,52 +429,49 @@ const Landing = () => {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-14 bg-muted/30">
-        <div className="container mx-auto px-4 sm:px-6">
-          <motion.div
-            className="text-center mb-16"
+{/* Testimonials Section */}
+<section className="py-14 bg-muted/30">
+  <div className="container mx-auto px-4 sm:px-6">
+    <motion.div
+      className="text-center mb-16"
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.8 }}
+    >
+      <h2 className="text-4xl md:text-5xl font-bold mb-6">What Our Investors Say</h2>
+      <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+        Hear from our community of successful investors
+      </p>
+    </motion.div>
+    <div className="relative overflow-hidden" aria-live="polite">
+      <motion.div
+        animate={{ x: ['0%', '-50%'] }}
+        transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+        className="flex space-x-4 whitespace-nowrap"
+        style={{ minWidth: '200%' }}
+      >
+        {testimonials.concat(testimonials).map((testimonial, index) => (
+          <div
+            key={index}
+            className="flex-shrink-0 w-full sm:w-[calc(100%/2)] md:w-[calc(100%/3)] lg:w-[calc(100%/4)] max-w-[400px] min-w-[280px] bg-card p-6 rounded-2xl shadow-card border border-border/50 flex items-start space-x-4"
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">What Our Investors Say</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Hear from our community of successful investors
-            </p>
-          </motion.div>
-          <motion.div
-            className="relative max-w-2xl mx-auto"
-          >
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentTestimonial}
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -50 }}
-                transition={{ duration: 0.5 }}
-                className="text-center bg-card p-8 rounded-2xl shadow-card border border-border/50"
-              >
-                <p className="text-muted-foreground mb-4">{testimonials[currentTestimonial].text}</p>
-                <p className="font-semibold">{testimonials[currentTestimonial].name}</p>
-                <p className="text-sm text-muted-foreground">{testimonials[currentTestimonial].role}</p>
-              </motion.div>
-            </AnimatePresence>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute left-4 top-1/2 -translate-y-1/2"
-              onClick={prevTestimonial}
-            >
-              <ChevronLeft className="h-6 w-6" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-4 top-1/2 -translate-y-1/2"
-              onClick={nextTestimonial}
-            >
-              <ChevronRight className="h-6 w-6" />
-            </Button>
-          </motion.div>
-        </div>
-      </section>
+            <div className="w-10 h-10 bg-[#094C79] rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-white text-sm font-bold">
+                {testimonial.name.slice(0, 2).toUpperCase()}
+              </span>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <p className="text-muted-foreground mb-4 text-sm line-clamp-3">{testimonial.text}</p>
+              <p className="font-semibold text-sm truncate">{testimonial.name}</p>
+              <p className="text-xs text-muted-foreground truncate">{testimonial.role}</p>
+            </div>
+          </div>
+        ))}
+      </motion.div>
+    </div>
+  </div>
+</section>
 
       {/* Features Section */}
       <section id="features" className="py-24">
