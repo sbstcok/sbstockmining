@@ -140,7 +140,7 @@ const Dashboard = () => {
   animate={{ opacity: 1, y: 0 }}
   transition={{ duration: 0.6, delay: 0.1 }}
 >
-  <Card className="bg-gradient-primary text-white shadow-glow border-0">
+  <Card className="bg-[#094C79] text-white shadow-glow border-0">
     <CardHeader className="pb-2">
       <div className="flex items-center justify-between">
         <CardTitle className="text-lg font-medium text-white/90">Total Balance</CardTitle>
@@ -181,8 +181,8 @@ const Dashboard = () => {
             className="h-16 flex flex-col items-center justify-center space-y-1 bg-card hover:bg-card/80 text-foreground border border-border/50 hover:border-primary/30"
             variant="outline"
           >
-            <ArrowDownRight className="h-5 w-5 text-primary" />
-            <span className="text-sm">Deposit</span>
+            <ArrowDownRight className="h-5 w-5 text-[#094C79]" />
+            <span className="text-sm hover:text-black">Deposit</span>
           </Button>
           
           <Button 
@@ -190,8 +190,8 @@ const Dashboard = () => {
             className="h-16 flex flex-col items-center justify-center space-y-1 bg-card hover:bg-card/80 text-foreground border border-border/50 hover:border-primary/30"
             variant="outline"
           >
-            <ArrowUpRight className="h-5 w-5 text-primary" />
-            <span className="text-sm">Withdraw</span>
+            <ArrowUpRight className="h-5 w-5 text-[#094C79]" />
+            <span className="text-sm hover:text-black">Withdraw</span>
           </Button>
           
           <Button 
@@ -199,15 +199,15 @@ const Dashboard = () => {
             className="h-16 flex flex-col items-center justify-center space-y-1 bg-card hover:bg-card/80 text-foreground border border-border/50 hover:border-primary/30"
             variant="outline"
           >
-            <TrendingUp className="h-5 w-5 text-primary" />
-            <span className="text-sm">Invest</span>
+            <TrendingUp className="h-5 w-5 text-[#094C79]" />
+            <span className="text-sm hover:text-black">Invest</span>
           </Button>
           
           <Button 
             className="h-16 flex flex-col items-center justify-center space-y-1 bg-card hover:bg-card/80 text-foreground border border-border/50 hover:border-primary/30"
             variant="outline"
           >
-            <Bitcoin className="h-5 w-5 text-primary" />
+            <Bitcoin className="h-5 w-5 text-[#094C79]" />
             <span className="text-sm hover:text-black">Market</span>
           </Button>
         </motion.div>
@@ -222,7 +222,7 @@ const Dashboard = () => {
             <Card className="shadow-card border-border/50">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <DollarSign className="h-5 w-5 text-primary" />
+                  <DollarSign className="h-5 w-5 text-[#094C79]" />
                   <span>Market Overview</span>
                 </CardTitle>
               </CardHeader>
@@ -237,7 +237,7 @@ const Dashboard = () => {
                   cryptoData.map((crypto, index) => (
                     <div key={index} className="flex items-center justify-between p-3 hover:bg-muted/30 rounded-lg transition-colors">
                       <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center">
+                        <div className="w-8 h-8 bg-[#CCAC53] rounded-full flex items-center justify-center">
                           <span className="text-white text-xs font-bold">
                             {crypto.symbol.slice(0, 2)}
                           </span>

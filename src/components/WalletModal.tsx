@@ -215,7 +215,7 @@ export const WalletModal = ({ type, onClose }: WalletModalProps) => {
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-gradient-primary rounded-full flex items-center justify-center text-white font-bold">
+                          <div className="w-10 h-10 bg-[#094C79] rounded-full flex items-center justify-center text-white font-bold">
                             {crypto.icon}
                           </div>
                           <div>
@@ -260,7 +260,7 @@ export const WalletModal = ({ type, onClose }: WalletModalProps) => {
                         onClick={() => setSelectedOption(option.id)}
                       >
                         <CardContent className="p-6 text-center">
-                          <option.icon className="h-8 w-8 mx-auto mb-3 text-primary" />
+                          <option.icon className="h-8 w-8 mx-auto mb-3 text-[#094C79]" />
                           <div className="font-semibold">{option.name}</div>
                         </CardContent>
                       </Card>
@@ -327,7 +327,7 @@ export const WalletModal = ({ type, onClose }: WalletModalProps) => {
                     />
                   </div>
                   
-                  <Button type="submit" className="w-full">
+                  <Button type="submit" className="w-full bg-[#094C79]">
                     Submit Withdrawal Request
                   </Button>
                 </form>
@@ -357,7 +357,7 @@ export const WalletModal = ({ type, onClose }: WalletModalProps) => {
                             </div>
                             <Badge 
                               variant="secondary" 
-                              className="bg-primary/10 text-primary border-primary/20"
+                              className="bg-primary/10 text-[#094C79] border-primary/20"
                             >
                               {option.apr} APR
                             </Badge>
@@ -377,7 +377,7 @@ export const WalletModal = ({ type, onClose }: WalletModalProps) => {
                             </div>
                           </div>
                           <Button 
-                            className="w-full"
+                            className="w-full bg-[#094C79]"
                             onClick={() => setSelectedPlan(option.id)}
                           >
                             Invest Now
@@ -452,7 +452,7 @@ export const WalletModal = ({ type, onClose }: WalletModalProps) => {
                           {investmentOptions.find(o => o.id === selectedPlan)?.description}
                         </p>
                         <div className="flex items-center space-x-2 text-sm">
-                          <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+                          <Badge variant="secondary" className="bg-primary/10 text-[#094C79] border-primary/20">
                             {investmentOptions.find(o => o.id === selectedPlan)?.apr} APR
                           </Badge>
                           <span className="text-muted-foreground">•</span>
