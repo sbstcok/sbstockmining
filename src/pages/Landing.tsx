@@ -222,25 +222,25 @@ const Landing = () => {
             <div className="container mx-auto px-4 sm:px-6 py-4 space-y-4">
               <button 
                 onClick={() => scrollToSection('features')} 
-                className="block w-full text-left text-muted-foreground hover:text-primary transition-colors"
+                className="block w-full text-left text-black hover:text-primary transition-colors"
               >
                 Features
               </button>
               <button 
                 onClick={() => scrollToSection('about')} 
-                className="block w-full text-left text-muted-foreground hover:text-primary transition-colors"
+                className="block w-full text-left text-black hover:text-primary transition-colors"
               >
                 About
               </button>
               <button 
                 onClick={() => scrollToSection('stats')} 
-                className="block w-full text-left text-muted-foreground hover:text-primary transition-colors"
+                className="block w-full text-left text-black hover:text-primary transition-colors"
               >
                 Stats
               </button>
               <button 
                 onClick={() => scrollToSection('invest')} 
-                className="block w-full text-left text-muted-foreground hover:text-primary transition-colors"
+                className="block w-full text-left text-black hover:text-primary transition-colors"
               >
                 Invest
               </button>

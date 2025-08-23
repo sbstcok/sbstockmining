@@ -145,7 +145,7 @@ const Onboarding = () => {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={loading}>
+                  <Button type="submit" className="w-full bg-[#094C79]" disabled={loading}>
                     {loading ? "Please wait..." : "Sign In"}
                   </Button>
                 </form>
@@ -209,7 +209,7 @@ const Onboarding = () => {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={loading}>
+                  <Button type="submit" className="w-full bg-[#094C79]" disabled={loading}>
                     {loading ? "Please wait..." : "Create Account"}
                   </Button>
                 </form>
