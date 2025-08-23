@@ -66,23 +66,33 @@ export const WalletModal = ({ type, onClose }: WalletModalProps) => {
   const cryptoAddresses = [
     { 
       name: 'Bitcoin (BTC)', 
-      address: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+      address: 'bc1q27u794x2c5tk3scv9unmx3yswr8yvpkzt5z6wj',
       icon: '₿'
     },
     { 
       name: 'Ethereum (ETH)', 
-      address: '0x742d35Cc6634C0532925a3b8D465C1F9c5cF4B7F',
+      address: '0xC4Fbb63647F2fcFd22d8375B0eB87f32d77F42b9',
       icon: 'Ξ'
     },
     { 
       name: 'USDT (TRC20)', 
-      address: 'TN3W4H6rK2ce4vX9YnFQHwKENnHjoxb3m9',
+      address: 'TJqQxsNSfFCpXzRZ8GU9DmTvXU2oCoAXjt',
       icon: '₮'
     },
     { 
-      name: 'USDC (ERC20)', 
-      address: '0x742d35Cc6634C0532925a3b8D465C1F9c5cF4B7F',
+      name: 'USD coin BCS (BEP20)', 
+      address: '0xC4Fbb63647F2fcFd22d8375B0eB87f32d77F42b9',
       icon: 'Ⓤ'
+    },
+     { 
+      name: 'Binance coin BNB (BEP20) ', 
+      address: '0xC4Fbb63647F2fcFd22d8375B0eB87f32d77F42b9',
+      icon: 'B'
+    },
+     { 
+      name: 'Tron (TRC20)', 
+      address: 'TJqQxsNSfFCpXzRZ8GU9DmTvXU2oCoAXjt',
+      icon: 'T'
     }
   ];
 
