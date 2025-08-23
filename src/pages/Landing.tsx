@@ -437,7 +437,7 @@ const Landing = () => {
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.8 }}
+      transition={{ duration: 1.5 }}
     >
       <h2 className="text-4xl md:text-5xl font-bold mb-6">What Our Investors Say</h2>
       <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
