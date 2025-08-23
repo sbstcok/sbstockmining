@@ -175,47 +175,47 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Users List */}
           <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Users</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="text-center py-4">Loading users...</div>
-              ) : (
-                <div className="grid gap-4">
-                  {users.map((user) => (
-                    <Card key={user.id} className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <Avatar className="h-12 w-12">
-                            <AvatarFallback className="bg-primary/20">
-                              {user.fullName?.split(' ').map(name => name[0]).join('').toUpperCase() || 'U'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <h3 className="font-semibold">{user.fullName}</h3>
-                            <p className="text-sm text-muted-foreground">{user.email}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-4">
-                          <div className="text-right">
-                            <div className="text-sm text-muted-foreground">Balance</div>
-                            <div className="font-semibold">${user.totalInvestments - user.totalWithdrawals}</div>
-                          </div>
-                          <Button
-                            onClick={() => setSelectedUser(user)}
-                            className="ml-4"
-                          >
-                            View Details
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
+  <CardHeader>
+    <CardTitle>Users</CardTitle>
+  </CardHeader>
+  <CardContent>
+    {loading ? (
+      <div className="text-center py-4">Loading users...</div>
+    ) : (
+      <div className="grid gap-4">
+        {users.map((user) => (
+          <Card key={user.id} className="p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center space-x-3">
+                <Avatar className="h-12 w-12">
+                  <AvatarFallback className="bg-primary/20">
+                    {user.fullName?.split(' ').map(name => name[0]).join('').toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h3 className="font-semibold">{user.fullName}</h3>
+                  <p className="text-sm text-muted-foreground">{user.email}</p>
                 </div>
-              )}
-            </CardContent>
+              </div>
+              <div className="flex flex-col sm:items-end gap-2">
+                <div className="text-right">
+                  <div className="text-sm text-muted-foreground">Balance</div>
+                  <div className="font-semibold">${user.totalInvestments - user.totalWithdrawals}</div>
+                </div>
+                <Button
+                  onClick={() => setSelectedUser(user)}
+                  className="w-full sm:w-auto"
+                >
+                  View Details
+                </Button>
+              </div>
+            </div>
           </Card>
+        ))}
+      </div>
+    )}
+  </CardContent>
+</Card>
 
           {/* User Details */}
           {selectedUser && (

@@ -106,6 +106,7 @@ const AdminLogin = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled
                 className="mb-4"
               />
             </div>
