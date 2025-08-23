@@ -15,6 +15,14 @@ import {
   EyeOff
 } from "lucide-react";
 import { WalletModal } from "@/components/WalletModal";
+import { auth, db } from "../../lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+
+interface UserData {
+  fullName: string;
+  totalInvestments: number;
+  totalWithdrawals: number;
+}
 
 const Dashboard = () => {
   const [balanceVisible, setBalanceVisible] = useState(true);
@@ -22,6 +30,8 @@ const Dashboard = () => {
   const [cryptoData, setCryptoData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [userLoading, setUserLoading] = useState(true);
 
   const investmentPlans = [
     { name: "Starter Plan", minAmount: 100, roi: 5, duration: "30 days" },
@@ -40,6 +50,29 @@ const Dashboard = () => {
   };
 
   // Fetch real-time crypto prices
+  // Fetch user data
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          return;
+        }
+
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          setUserData(userDoc.data() as UserData);
+        }
+      } catch (err) {
+        console.error("Error fetching user data:", err);
+      } finally {
+        setUserLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
   useEffect(() => {
     const fetchPrices = async () => {
       try {
@@ -95,7 +128,9 @@ const Dashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="text-3xl font-bold mb-2">Welcome back, John!</h1>
+          <h1 className="text-3xl font-bold mb-2">
+            {userLoading ? "Welcome..." : `Welcome back, ${userData?.fullName || 'User'}!`}
+          </h1>
           <p className="text-muted-foreground">Here's your investment overview</p>
         </motion.div>
 
@@ -121,7 +156,11 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-4xl font-bold mb-4 text-white">
-                {balanceVisible ? "$5,000.00" : "••••••"}
+                {balanceVisible 
+                  ? userLoading 
+                    ? "Loading..." 
+                    : `$${((userData?.totalInvestments || 0) - (userData?.totalWithdrawals || 0)).toFixed(2)}`
+                  : "••••••"}
               </div>
               <div className="flex items-center space-x-2 text-white/80 mb-6">
                 <ArrowUpRight className="h-4 w-4" />

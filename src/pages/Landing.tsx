@@ -26,12 +26,11 @@ const Landing = () => {
     >
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="container mx-auto px-6 py-2 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <TrendingUp className="h-5 w-5 text-white" />
+            <div className="flex items-center space-x-3 h-20 w-20">
+              <img src="/SBLOGO.png" alt="com logo" />
             </div>
-            <span className="text-xl font-bold">SB Crypto</span>
           </div>
 
           {/* Desktop Navigation */}
@@ -479,10 +478,9 @@ const Landing = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-                  <TrendingUp className="h-5 w-5 text-white" />
-                </div>
-                <span className="text-xl font-bold">SB Crypto</span>
+                <div className="flex items-center space-x-3 h-20 w-20">
+              <img src="/SBLOGO.png" alt="com logo" />
+            </div>
               </div>
               <p className="text-muted-foreground">
                 Your trusted partner in crypto mining and stock trading

@@ -132,11 +132,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <div className="flex h-full flex-col">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-border">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-                <TrendingUp className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-lg font-semibold">InvestPro</span>
+            <div className="flex items-center space-x-3 h-20 w-20">
+              <img src="/SBLOGO.png" alt="com logo" />
             </div>
             <Button
               variant="ghost"
