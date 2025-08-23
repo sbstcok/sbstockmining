@@ -149,7 +149,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           <div className="p-6 border-b border-border">
             <div className="flex items-center space-x-3">
               <Avatar className="h-10 w-10">
-                <AvatarFallback className="bg-gradient-primary text-white">
+                <AvatarFallback className="bg-[#094C79] text-white">
                   {userData?.fullName?.split(' ').map(n => n[0]).join('') || '??'}
                 </AvatarFallback>
               </Avatar>
@@ -168,7 +168,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 variant={isActive(item.path) ? "secondary" : "ghost"}
                 className={`w-full justify-start group ${
                   isActive(item.path) 
-                    ? "bg-primary/10 text-primary hover:bg-primary/15" 
+                    ? "bg-primary/10 text-[#094C79] hover:bg-primary/15" 
                     : "hover:bg-muted/50"
                 }`}
                 onClick={() => {

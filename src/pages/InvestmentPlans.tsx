@@ -146,7 +146,7 @@ const InvestmentPlans = () => {
                     {/* Features */}
                     <div className="space-y-3">
                       <div className="flex items-center text-sm font-medium">
-                        <Shield className="h-4 w-4 mr-2 text-primary" />
+                        <Shield className="h-4 w-4 mr-2 text-[#094C79]" />
                         Features included:
                       </div>
                       <ul className="space-y-2">
@@ -187,7 +187,7 @@ const InvestmentPlans = () => {
             <h3 className="text-xl font-semibold mb-4">Why Invest With Us?</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
               <div className="flex flex-col items-center">
-                <Shield className="h-8 w-8 text-primary mb-2" />
+                <Shield className="h-8 w-8 text-[#094C79] mb-2" />
                 <p className="font-medium">Secure & Regulated</p>
                 <p className="text-muted-foreground">SEC registered and FDIC insured</p>
               </div>
