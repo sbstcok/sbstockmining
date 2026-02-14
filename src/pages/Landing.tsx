@@ -718,7 +718,7 @@ const Landing = () => {
                 <li>
                   <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 h-11 bg-[#CCAC53] text-primary-foreground hover:bg-primary/90 px-8 py-4 text-lg font-semibold rounded-xl shadow-glow transition-all duration-300 hover:shadow-elevated group mb-10">Get Started<svg xmlns="https://wa.me/+18402195113" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform">
                 </li>
-                <li><FontAwesomeIcon icon={byPrefixAndName.fab['whatsapp']} /></li>
+                <li><FontAwesomeIcon icon={byPrefixAndName.fab['whatsapp']} color="#25D366" /></li>
               </ul>
             </div>
             
