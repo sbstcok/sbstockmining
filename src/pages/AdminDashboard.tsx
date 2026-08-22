@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { auth, db } from "../../lib/firebase";
-import { collection, getDocs, doc, updateDoc, getDoc } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, getDoc, query, where, increment } from "firebase/firestore";
 import { toast } from "sonner";interface UserData {
   id: string;
   fullName: string;
@@ -23,12 +23,26 @@ import { toast } from "sonner";interface UserData {
   totalWithdrawals: number;
   country?: string; // Optional, as it wasn't shown in the Firestore schema
   createdAt: string;
-}const AdminDashboard = () => {
+}
+
+interface WithdrawalRequest {
+  id: string;
+  amount: number;
+  status: string;
+  createdAt?: string;
+}
+
+const AdminDashboard = () => {
   const navigate = useNavigate();
   const [users, setUsers] = useState<UserData[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [newBalance, setNewBalance] = useState("");  useEffect(() => {
+  const [newBalance, setNewBalance] = useState("");
+  const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
+  const [withdrawalsLoading, setWithdrawalsLoading] = useState(false);
+  const [updatingWithdrawalId, setUpdatingWithdrawalId] = useState<string | null>(null);
+
+  useEffect(() => {
     const checkAdminAuth = async () => {
       const adminToken = sessionStorage.getItem("adminToken");
       const isAdmin = sessionStorage.getItem("isAdmin") === "true";
@@ -95,7 +109,61 @@ checkAdminAuth();  }, [navigate]);  const fetchUsers = async () => {
 } catch (error) {
   console.error("Error updating balance:", error);
   toast.error("Failed to update balance");
-}  };  return (
+}
+  };
+
+  const handleSelectUser = async (user: UserData) => {
+    setSelectedUser(user);
+    setWithdrawalsLoading(true);
+    try {
+      const snapshot = await getDocs(
+        query(collection(db, "withdrawals"), where("userId", "==", user.id))
+      );
+      setWithdrawalRequests(snapshot.docs.map((withdrawal) => ({
+        id: withdrawal.id,
+        amount: Number(withdrawal.data().amount) || 0,
+        status: withdrawal.data().status || "pending",
+        createdAt: withdrawal.data().createdAt
+      })));
+    } catch (error) {
+      console.error("Error fetching withdrawal requests:", error);
+      toast.error("Failed to load withdrawal requests");
+      setWithdrawalRequests([]);
+    } finally {
+      setWithdrawalsLoading(false);
+    }
+  };
+
+  const handleUpdateWithdrawal = async (withdrawal: WithdrawalRequest, status: "completed" | "rejected") => {
+    if (!selectedUser || withdrawal.status !== "pending") return;
+
+    try {
+      setUpdatingWithdrawalId(withdrawal.id);
+      await updateDoc(doc(db, "withdrawals", withdrawal.id), {
+        status,
+        updatedAt: new Date().toISOString()
+      });
+
+      if (status === "completed") {
+        await updateDoc(doc(db, "users", selectedUser.id), {
+          totalWithdrawals: increment(withdrawal.amount)
+        });
+      }
+
+      setWithdrawalRequests((requests) => requests.map((request) => (
+        request.id === withdrawal.id ? { ...request, status } : request
+      )));
+      await fetchUsers();
+      toast.success(`Withdrawal ${status === "completed" ? "marked as paid" : "rejected"}`);
+    } catch (error) {
+      console.error("Error updating withdrawal:", error);
+      toast.error("Failed to update withdrawal request");
+    } finally {
+      setUpdatingWithdrawalId(null);
+    }
+  };
+
+  return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -157,12 +225,21 @@ checkAdminAuth();  }, [navigate]);  const fetchUsers = async () => {
                           ${(user.totalInvestments - user.totalWithdrawals).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
                       </div>
-                      <Button
-                        onClick={() => setSelectedUser(user)}
-                        className="w-full sm:w-auto"
-                      >
-                        View Details
-                      </Button>
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        <Button
+                          onClick={() => setSelectedUser(user)}
+                          className="w-full sm:w-auto"
+                        >
+                          View Details
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => handleSelectUser(user)}
+                          className="w-full sm:w-auto"
+                        >
+                          Update Withdrawals
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </Card>
@@ -213,6 +290,57 @@ checkAdminAuth();  }, [navigate]);  const fetchUsers = async () => {
                   <span className="text-sm text-muted-foreground">Member Since:</span>
                   <p>{new Date(selectedUser.createdAt).toLocaleDateString()}</p>
                 </div>
+              </div>
+
+              <div className="mt-6 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">Withdrawal Requests</h3>
+                  <Button variant="outline" size="sm" onClick={() => handleSelectUser(selectedUser)}>
+                    Refresh
+                  </Button>
+                </div>
+                {withdrawalsLoading ? (
+                  <p className="text-sm text-muted-foreground">Loading withdrawal requests...</p>
+                ) : withdrawalRequests.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No withdrawal requests found.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {withdrawalRequests.map((withdrawal) => (
+                      <div key={withdrawal.id} className="rounded-md border border-border p-3 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <div>
+                            <p className="font-medium">${withdrawal.amount.toLocaleString()}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {withdrawal.createdAt
+                                ? new Date(withdrawal.createdAt).toLocaleString()
+                                : "Date unavailable"}
+                            </p>
+                          </div>
+                          <span className="text-sm capitalize text-muted-foreground">{withdrawal.status}</span>
+                        </div>
+                        {withdrawal.status === "pending" && (
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => handleUpdateWithdrawal(withdrawal, "completed")}
+                              disabled={updatingWithdrawalId === withdrawal.id}
+                            >
+                              {updatingWithdrawalId === withdrawal.id ? "Updating..." : "Mark as Paid"}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleUpdateWithdrawal(withdrawal, "rejected")}
+                              disabled={updatingWithdrawalId === withdrawal.id}
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="mt-6 space-y-2">

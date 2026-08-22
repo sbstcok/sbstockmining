@@ -721,7 +721,7 @@ const Landing = () => {
                     className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-2"
                   >
                     <a 
-                      href="https://wa.me/+18402195113" 
+                      href="https://wa.me/+18255900287"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -732,7 +732,7 @@ const Landing = () => {
                 </li>
                 {/* <li>
                   <a 
-                    href="https://wa.me/+18402195113"
+                    href="https://wa.me/+18255900287"
                     className="flex items-center gap-2 text-muted-foreground hover:text-green-500 transition-colors"
                     target="_blank"
                     rel="noopener noreferrer"

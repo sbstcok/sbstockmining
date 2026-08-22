@@ -16,12 +16,22 @@ import {
 } from "lucide-react";
 import { WalletModal } from "@/components/WalletModal";
 import { auth, db } from "../../lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { collection, doc, getDocs, onSnapshot, query, where } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 
 interface UserData {
   fullName: string;
   totalInvestments: number;
   totalWithdrawals: number;
+}
+
+interface TransactionRecord {
+  id: string;
+  type: "Deposit" | "Withdrawal" | "Investment";
+  amount: number;
+  status: string;
+  createdAt?: string;
+  planName?: string;
 }
 
 const Dashboard = () => {
@@ -32,12 +42,66 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [userLoading, setUserLoading] = useState(true);
+  const [showTransactionHistory, setShowTransactionHistory] = useState(false);
+  const [transactionHistory, setTransactionHistory] = useState<TransactionRecord[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
 
-  const investmentPlans = [
-    { name: "Starter Plan", minAmount: 100, roi: 5, duration: "30 days" },
-    { name: "Pro Plan", minAmount: 1000, roi: 10, duration: "60 days" },
-    { name: "Elite Plan", minAmount: 10000, roi: 20, duration: "90 days" }
-  ];
+  const loadTransactionHistory = async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      setHistoryError("You must be logged in to view transaction history.");
+      return;
+    }
+
+    try {
+      setHistoryLoading(true);
+      setHistoryError(null);
+
+      const [depositsSnapshot, withdrawalsSnapshot, investmentsSnapshot] = await Promise.all([
+        getDocs(query(collection(db, "deposits"), where("userId", "==", user.uid))),
+        getDocs(query(collection(db, "withdrawals"), where("userId", "==", user.uid))),
+        getDocs(query(collection(db, "investments"), where("userId", "==", user.uid)))
+      ]);
+
+      const records: TransactionRecord[] = [
+        ...depositsSnapshot.docs.map((transaction) => ({
+          id: transaction.id,
+          type: "Deposit" as const,
+          amount: Number(transaction.data().amount) || 0,
+          status: transaction.data().status || "pending",
+          createdAt: transaction.data().createdAt
+        })),
+        ...withdrawalsSnapshot.docs.map((transaction) => ({
+          id: transaction.id,
+          type: "Withdrawal" as const,
+          amount: Number(transaction.data().amount) || 0,
+          status: transaction.data().status || "pending",
+          createdAt: transaction.data().createdAt
+        })),
+        ...investmentsSnapshot.docs.map((transaction) => {
+          const data = transaction.data();
+          return {
+            id: transaction.id,
+            type: "Investment" as const,
+            amount: Number(data.amount) || 0,
+            status: data.status || "pending",
+            createdAt: data.createdAt,
+            planName: data.planName || data.planDetails?.planName || data.planDetails?.name
+          };
+        })
+      ].sort((first, second) => {
+        return new Date(second.createdAt || 0).getTime() - new Date(first.createdAt || 0).getTime();
+      });
+
+      setTransactionHistory(records);
+    } catch (error) {
+      console.error("Error loading transaction history:", error);
+      setHistoryError("Unable to load transaction history. Please try again.");
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
 
   // Map of display names to CoinGecko IDs
   const coinMap = {
@@ -50,27 +114,35 @@ const Dashboard = () => {
   };
 
   // Fetch real-time crypto prices
-  // Fetch user data
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const user = auth.currentUser;
-        if (!user) {
-          return;
-        }
+    let unsubscribeUser: (() => void) | undefined;
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      unsubscribeUser?.();
+      setUserLoading(true);
 
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists()) {
-          setUserData(userDoc.data() as UserData);
-        }
-      } catch (err) {
-        console.error("Error fetching user data:", err);
-      } finally {
+      if (!user) {
+        setUserData(null);
         setUserLoading(false);
+        return;
       }
-    };
 
-    fetchUserData();
+      unsubscribeUser = onSnapshot(
+        doc(db, "users", user.uid),
+        (userDoc) => {
+          setUserData(userDoc.exists() ? userDoc.data() as UserData : null);
+          setUserLoading(false);
+        },
+        (error) => {
+          console.error("Error listening for user updates:", error);
+          setUserLoading(false);
+        }
+      );
+    });
+
+    return () => {
+      unsubscribeUser?.();
+      unsubscribeAuth();
+    };
   }, []);
 
   useEffect(() => {
@@ -204,6 +276,11 @@ const Dashboard = () => {
           </Button>
           
           <Button 
+            type="button"
+            onClick={() => {
+              setShowTransactionHistory(true);
+              void loadTransactionHistory();
+            }}
             className="h-16 flex flex-col items-center justify-center space-y-1 bg-card hover:bg-card/80 text-foreground border border-border/50 hover:border-primary/30"
             variant="outline"
           >
@@ -268,6 +345,61 @@ const Dashboard = () => {
           </motion.div>
         </div>
       </div>
+
+      {showTransactionHistory && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setShowTransactionHistory(false)}
+        >
+          <Card
+            className="w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Transaction History</CardTitle>
+              <Button variant="ghost" size="sm" onClick={() => setShowTransactionHistory(false)}>
+                ×
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {historyLoading ? (
+                <p className="py-8 text-center text-muted-foreground">Loading transaction history...</p>
+              ) : historyError ? (
+                <p className="py-8 text-center text-destructive">{historyError}</p>
+              ) : transactionHistory.length === 0 ? (
+                <p className="py-8 text-center text-muted-foreground">No transactions found.</p>
+              ) : (
+                <div className="space-y-3">
+                  {transactionHistory.map((transaction) => (
+                    <div
+                      key={`${transaction.type}-${transaction.id}`}
+                      className="flex flex-col gap-2 rounded-lg border border-border/50 p-4 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div>
+                        <p className="font-semibold">
+                          {transaction.type}
+                          {transaction.planName ? ` - ${transaction.planName}` : ""}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {transaction.createdAt
+                            ? new Date(transaction.createdAt).toLocaleString()
+                            : "Date unavailable"}
+                        </p>
+                      </div>
+                      <div className="text-left sm:text-right">
+                        <p className="font-semibold">${transaction.amount.toLocaleString()}</p>
+                        <Badge variant="secondary" className="capitalize">
+                          {transaction.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Modals */}
       {modalType && (

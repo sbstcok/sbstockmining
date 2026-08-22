@@ -11,9 +11,15 @@ import {auth, db, addDoc, collection, getDoc, doc } from "../../lib/firebase";
 interface WalletModalProps {
   type: 'deposit' | 'withdraw' | 'invest';
   onClose: () => void;
+  investmentPlan?: {
+    name: string;
+    price: number;
+    receiveAmount: number;
+    duration: string;
+  };
 }
 
-export const WalletModal = ({ type, onClose }: WalletModalProps) => {
+export const WalletModal = ({ type, onClose, investmentPlan }: WalletModalProps) => {
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
@@ -24,44 +30,24 @@ export const WalletModal = ({ type, onClose }: WalletModalProps) => {
     password: ''
   });
 
+  const selectedInvestmentPlan = investmentPlan ?? {
+    name: 'Plan 1',
+    price: 100,
+    receiveAmount: 500,
+    duration: '24 hours'
+  };
+
   const investmentOptions = [
-    {
-      id: 'bitcoin-mining',
-      name: 'Bitcoin Mining Pool',
-      description: 'Join our Bitcoin mining pool and earn daily rewards',
-      minAmount: 1000,
-      apr: '12%',
-      duration: '12 months',
-      riskLevel: 'Medium'
-    },
-    {
-      id: 'eth-staking',
-      name: 'ETH 2.0 Staking',
-      description: 'Stake your ETH and earn staking rewards',
-      minAmount: 500,
-      apr: '8%',
-      duration: '6 months',
-      riskLevel: 'Low'
-    },
-    {
-      id: 'defi-yield',
-      name: 'DeFi Yield Farming',
-      description: 'Earn high yields through automated DeFi strategies',
-      minAmount: 2000,
-      apr: '15%',
-      duration: '3 months',
-      riskLevel: 'High'
-    },
-    {
-      id: 'nft-fund',
-      name: 'NFT Investment Fund',
-      description: 'Diversified portfolio of premium NFT assets',
-      minAmount: 5000,
-      apr: '20%',
-      duration: '9 months',
-      riskLevel: 'High'
-    }
-  ];
+    { id: 'bitcoin-mining', name: 'Bitcoin Mining Pool', description: 'Join our Bitcoin mining pool and earn daily rewards' },
+    { id: 'eth-staking', name: 'ETH 2.0 Staking', description: 'Stake your ETH and earn staking rewards' },
+    { id: 'defi-yield', name: 'DeFi Yield Farming', description: 'Earn high yields through automated DeFi strategies' },
+    { id: 'nft-fund', name: 'NFT Investment Fund', description: 'Diversified portfolio of premium NFT assets' }
+  ].map((option) => ({
+    ...option,
+    minAmount: selectedInvestmentPlan.price,
+    returnAmount: selectedInvestmentPlan.receiveAmount,
+    duration: selectedInvestmentPlan.duration
+  }));
 
   const cryptoAddresses = [
     { 
@@ -150,10 +136,11 @@ export const WalletModal = ({ type, onClose }: WalletModalProps) => {
         await addDoc(collection(db, 'withdrawals'), data);
         toast.success('Withdrawal request submitted successfully!');
       } else if (type === 'invest') {
-        const selectedInvestmentPlan = investmentOptions.find(o => o.id === selectedPlan);
+        const selectedOptionDetails = investmentOptions.find(o => o.id === selectedPlan);
         await addDoc(collection(db, 'investments'), {
           ...data,
-          planDetails: selectedInvestmentPlan,
+          planName: selectedInvestmentPlan.name,
+          planDetails: selectedOptionDetails,
         });
         toast.success('Investment submitted successfully!');
       } else if (type === 'deposit') {
@@ -317,7 +304,7 @@ export const WalletModal = ({ type, onClose }: WalletModalProps) => {
                   </div>
                   
                   <div>
-                    <Label htmlFor="password">Confirm Password</Label>
+                    <Label htmlFor="password">Confirm PIN</Label>
                     <Input 
                       id="password"
                       type="password"
@@ -359,10 +346,10 @@ export const WalletModal = ({ type, onClose }: WalletModalProps) => {
                               variant="secondary" 
                               className="bg-primary/10 text-[#094C79] border-primary/20"
                             >
-                              {option.apr} APR
+                              Receive ${option.returnAmount.toLocaleString()}
                             </Badge>
                           </div>
-                          <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
+                          <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
                             <div>
                               <p className="text-muted-foreground">Minimum</p>
                               <p className="font-medium">${option.minAmount}</p>
@@ -370,10 +357,6 @@ export const WalletModal = ({ type, onClose }: WalletModalProps) => {
                             <div>
                               <p className="text-muted-foreground">Duration</p>
                               <p className="font-medium">{option.duration}</p>
-                            </div>
-                            <div>
-                              <p className="text-muted-foreground">Risk Level</p>
-                              <p className="font-medium">{option.riskLevel}</p>
                             </div>
                           </div>
                           <Button 
@@ -453,7 +436,7 @@ export const WalletModal = ({ type, onClose }: WalletModalProps) => {
                         </p>
                         <div className="flex items-center space-x-2 text-sm">
                           <Badge variant="secondary" className="bg-primary/10 text-[#094C79] border-primary/20">
-                            {investmentOptions.find(o => o.id === selectedPlan)?.apr} APR
+                            Receive ${investmentOptions.find(o => o.id === selectedPlan)?.returnAmount.toLocaleString()}
                           </Badge>
                           <span className="text-muted-foreground">•</span>
                           <span>{investmentOptions.find(o => o.id === selectedPlan)?.duration}</span>

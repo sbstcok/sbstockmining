@@ -17,58 +17,28 @@ import { toast } from "sonner";
 
 const InvestmentPlans = () => {
   const [showInvestModal, setShowInvestModal] = useState(false);
-  const [selectedPlanAmount, setSelectedPlanAmount] = useState(0);
+  const [selectedInvestmentPlan, setSelectedInvestmentPlan] = useState<{
+    name: string;
+    price: number;
+    receiveAmount: number;
+    duration: string;
+  } | null>(null);
   
   const plans = [
-    {
-      name: "Starter Plan",
-      price: 100,
-      roi: 5,
-      duration: "30 days",
-      features: [
-        "Basic portfolio management",
-        "Monthly performance reports",
-        "Email support",
-        "Mobile app access"
-      ],
-      color: "from-blue-500 to-cyan-500",
-      popular: false
-    },
-    {
-      name: "Pro Plan", 
-      price: 1000,
-      roi: 10,
-      duration: "60 days",
-      features: [
-        "Advanced analytics",
-        "Weekly performance reports",
-        "Priority support",
-        "Risk management tools",
-        "Portfolio diversification"
-      ],
-      color: "from-purple-500 to-pink-500",
-      popular: true
-    },
-    {
-      name: "Elite Plan",
-      price: 10000,
-      roi: 20,
-      duration: "90 days", 
-      features: [
-        "Premium analytics & AI insights",
-        "Daily performance reports",
-        "Dedicated account manager", 
-        "Advanced risk management",
-        "Custom investment strategies",
-        "VIP support & consultations"
-      ],
-      color: "from-orange-500 to-yellow-500",
-      popular: false
-    }
+    { name: "Plan 1", price: 100, receiveAmount: 500, duration: "24 hours", color: "from-blue-500 to-cyan-500", popular: false },
+    { name: "Plan 2", price: 500, receiveAmount: 2500, duration: "1 week", color: "from-cyan-500 to-teal-500", popular: false },
+    { name: "Plan 3", price: 1000, receiveAmount: 5000, duration: "2 weeks", color: "from-teal-500 to-green-500", popular: false },
+    { name: "Plan 4", price: 5000, receiveAmount: 25000, duration: "1 month", color: "from-green-500 to-lime-500", popular: false },
+    { name: "Plan 5", price: 10000, receiveAmount: 50000, duration: "2 months", color: "from-yellow-500 to-orange-500", popular: false },
+    { name: "Plan 6", price: 15000, receiveAmount: 75000, duration: "3 months", color: "from-orange-500 to-red-500", popular: false },
+    { name: "Plan 7", price: 20000, receiveAmount: 100000, duration: "4 months", color: "from-red-500 to-pink-500", popular: true },
+    { name: "Plan 8", price: 30000, receiveAmount: 250000, duration: "5 months", color: "from-pink-500 to-purple-500", popular: false },
+    { name: "Plan 9", price: 50000, receiveAmount: 500000, duration: "1 year", color: "from-purple-500 to-indigo-500", popular: false },
+    { name: "Plan 10", price: 100000, receiveAmount: 1000000, duration: "2 years", color: "from-indigo-500 to-blue-500", popular: false }
   ];
 
-  const handleSubscribe = (planName: string, price: number) => {
-    setSelectedPlanAmount(price);
+  const handleSubscribe = (plan: typeof plans[number]) => {
+    setSelectedInvestmentPlan(plan);
     setShowInvestModal(true);
   };
 
@@ -117,7 +87,7 @@ const InvestmentPlans = () => {
                     </div>
                     <CardTitle className="text-2xl mb-2">{plan.name}</CardTitle>
                     <CardDescription className="text-lg">
-                      Perfect for {plan.name === 'Starter Plan' ? 'beginners' : plan.name === 'Pro Plan' ? 'growing portfolios' : 'serious investors'}
+                      Fixed-term investment plan
                     </CardDescription>
                   </CardHeader>
                   
@@ -128,11 +98,11 @@ const InvestmentPlans = () => {
                       <div className="text-sm text-muted-foreground">Minimum investment</div>
                     </div>
 
-                    {/* ROI & Duration */}
+                    {/* Return & Duration */}
                     <div className="flex justify-center space-x-8">
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-success">{plan.roi}%</div>
-                        <div className="text-xs text-muted-foreground">Expected ROI</div>
+                        <div className="text-2xl font-bold text-success">${plan.receiveAmount.toLocaleString()}</div>
+                        <div className="text-xs text-muted-foreground">You receive</div>
                       </div>
                       <div className="text-center">
                         <div className="flex items-center justify-center text-lg font-semibold">
@@ -150,12 +120,14 @@ const InvestmentPlans = () => {
                         Features included:
                       </div>
                       <ul className="space-y-2">
-                        {plan.features.map((feature, featureIndex) => (
-                          <li key={featureIndex} className="flex items-start text-sm">
-                            <CheckCircle className="h-4 w-4 mr-2 text-success mt-0.5 flex-shrink-0" />
-                            <span>{feature}</span>
-                          </li>
-                        ))}
+                        <li className="flex items-start text-sm">
+                          <CheckCircle className="h-4 w-4 mr-2 text-success mt-0.5 flex-shrink-0" />
+                          <span>Fixed return of ${plan.receiveAmount.toLocaleString()}</span>
+                        </li>
+                        <li className="flex items-start text-sm">
+                          <CheckCircle className="h-4 w-4 mr-2 text-success mt-0.5 flex-shrink-0" />
+                          <span>Minimum investment of ${plan.price.toLocaleString()}</span>
+                        </li>
                       </ul>
                     </div>
 
@@ -166,7 +138,7 @@ const InvestmentPlans = () => {
                         : 'bg-secondary text-secondary-foreground hover:bg-secondary/90'
                       } group`}
                       size="lg"
-                      onClick={() => handleSubscribe(plan.name, plan.price)}
+                      onClick={() => handleSubscribe(plan)}
                     >
                       Subscribe to {plan.name}
                       <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -209,6 +181,7 @@ const InvestmentPlans = () => {
         {showInvestModal && (
           <WalletModal
             type="invest"
+            investmentPlan={selectedInvestmentPlan ?? undefined}
             onClose={() => setShowInvestModal(false)}
           />
         )}
