@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "repair:dry-run": "node ./scripts/repair_balances.mjs",
+    "repair:apply": "node ./scripts/repair_balances.mjs --apply --confirm",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
@@ -47,6 +49,7 @@
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.6.0",
     "firebase": "^12.1.0",
+    "firebase-admin": "^12.0.0",
     "framer-motion": "^12.23.12",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.462.0",
@@ -64,6 +67,7 @@
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
+    "uuid": "^14.0.2",
     "vaul": "^0.9.9",
     "zod": "^3.25.76"
   },
