@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { auth, db } from '../../lib/firebase';
-import { collection, getDocs, doc, updateDoc, getDoc, query, where, increment } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, getDoc, query, where, increment, addDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
 
 interface UserData {
@@ -147,6 +147,73 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const handleSetBalance = async () => {
+    if (!selectedUser || !newBalance) return;
+    const desiredBalance = Number.parseFloat(newBalance);
+    if (!Number.isFinite(desiredBalance)) {
+      toast.error('Please enter a valid balance amount');
+      return;
+    }
+
+    try {
+      const userRef = doc(db, 'users', selectedUser.id);
+      const userDoc = await getDoc(userRef);
+      if (!userDoc.exists()) {
+        toast.error('User record no longer exists.');
+        return;
+      }
+
+      const userData = userDoc.data();
+      const previousInvestments = Number(userData.totalInvestments) || 0;
+      const previousWithdrawals = Number(userData.totalWithdrawals) || 0;
+      const previousBalance = previousInvestments - previousWithdrawals;
+      const balanceDelta = desiredBalance - previousBalance;
+      const nextInvestments = previousInvestments + balanceDelta;
+
+      const balanceAudit = {
+        userId: selectedUser.id,
+        email: userData.email || selectedUser.email,
+        fullName: userData.fullName || selectedUser.fullName,
+        action: 'set_balance',
+        previousBalance,
+        previousInvestments,
+        previousWithdrawals,
+        newBalance: desiredBalance,
+        balanceDelta,
+        updatedAt: new Date().toISOString(),
+        editedBy: auth.currentUser?.email || 'admin',
+      };
+
+      await addDoc(collection(db, 'users', selectedUser.id, 'balanceHistory'), balanceAudit);
+      await updateDoc(userRef, {
+        ...userData,
+        totalInvestments: nextInvestments,
+        totalWithdrawals: previousWithdrawals,
+        updatedAt: new Date().toISOString(),
+      });
+
+      setNewBalance('');
+      await fetchUsers();
+      const updatedUserDoc = await getDoc(doc(db, 'users', selectedUser.id));
+      if (updatedUserDoc.exists()) {
+        const data = updatedUserDoc.data();
+        setSelectedUser({
+          id: selectedUser.id,
+          fullName: data.fullName || 'Unknown',
+          email: data.email || 'Unknown',
+          totalInvestments: Number(data.totalInvestments) || 0,
+          totalWithdrawals: Number(data.totalWithdrawals) || 0,
+          country: data.country || undefined,
+          createdAt: data.createdAt || undefined,
+        });
+      }
+      toast.success('User balance set successfully.');
+    } catch (err) {
+      console.error('Error setting balance:', err);
+      toast.error('Failed to set balance.');
+    }
+  };
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -246,8 +313,9 @@ const AdminDashboard: React.FC = () => {
                       </Button>
                     </div>
                     <div className="flex space-x-2">
-                      <Input type="number" value={newBalance} onChange={(e) => setNewBalance(e.target.value)} placeholder="Enter amount to add" disabled={!adminEditEnabled} />
+                      <Input type="number" value={newBalance} onChange={(e) => setNewBalance(e.target.value)} placeholder="Enter amount to add or target balance" disabled={!adminEditEnabled} />
                       <Button onClick={handleUpdateBalance} disabled={!adminEditEnabled}>Add Amount</Button>
+                      <Button variant="secondary" onClick={() => void handleSetBalance()} disabled={!adminEditEnabled}>Set Balance</Button>
                     </div>
                     {!adminEditEnabled && <p className="text-xs text-muted-foreground">Enable edit to modify user balances.</p>}
                   </div>
