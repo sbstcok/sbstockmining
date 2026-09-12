@@ -40,6 +40,7 @@ const AdminDashboard: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [newBalance, setNewBalance] = useState('');
+  const [adminEditEnabled, setAdminEditEnabled] = useState(false);
   const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
   const [withdrawalsLoading, setWithdrawalsLoading] = useState(false);
   const [updatingWithdrawalId, setUpdatingWithdrawalId] = useState<string | null>(null);
@@ -238,11 +239,17 @@ const AdminDashboard: React.FC = () => {
                   </div>
 
                   <div className="mt-6 space-y-2">
-                    <label className="text-sm font-medium">Add To Balance</label>
-                    <div className="flex space-x-2">
-                      <Input type="number" value={newBalance} onChange={(e) => setNewBalance(e.target.value)} placeholder="Enter amount to add" />
-                      <Button onClick={handleUpdateBalance}>Add Amount</Button>
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium">Add To Balance</label>
+                      <Button variant={adminEditEnabled ? 'default' : 'outline'} size="sm" onClick={() => setAdminEditEnabled(!adminEditEnabled)}>
+                        {adminEditEnabled ? 'Disable Edit' : 'Enable Edit'}
+                      </Button>
                     </div>
+                    <div className="flex space-x-2">
+                      <Input type="number" value={newBalance} onChange={(e) => setNewBalance(e.target.value)} placeholder="Enter amount to add" disabled={!adminEditEnabled} />
+                      <Button onClick={handleUpdateBalance} disabled={!adminEditEnabled}>Add Amount</Button>
+                    </div>
+                    {!adminEditEnabled && <p className="text-xs text-muted-foreground">Enable edit to modify user balances.</p>}
                   </div>
                 </div>
               </CardContent>
