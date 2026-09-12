@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { auth, db } from '../../lib/firebase';
-import { collection, getDocs, doc, updateDoc, getDoc, query, where, increment } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, getDoc, query, where, increment, addDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
 
 interface UserData {
@@ -39,7 +39,7 @@ const AdminDashboard: React.FC = () => {
   const [users, setUsers] = useState<UserData[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [newBalance, setNewBalance] = useState('');
+  const [balanceDraft, setBalanceDraft] = useState('');
   const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
   const [withdrawalsLoading, setWithdrawalsLoading] = useState(false);
   const [updatingWithdrawalId, setUpdatingWithdrawalId] = useState<string | null>(null);
@@ -81,34 +81,65 @@ const AdminDashboard: React.FC = () => {
 
   useEffect(() => { checkAdminAuth(); }, [navigate]);
 
-  const handleUpdateBalance = async () => {
-    if (!selectedUser || !newBalance) return;
-    const amountToAdd = parseFloat(newBalance);
-    if (Number.isNaN(amountToAdd)) {
-      toast.error('Please enter a valid number');
+  const getCurrentBalance = (user: Pick<UserData, 'totalInvestments' | 'totalWithdrawals'>) => user.totalInvestments - user.totalWithdrawals;
+
+  const handleBalanceEdit = async (mode: 'set' | 'reset' = 'set') => {
+    if (!selectedUser) return;
+
+    const parsedBalance = mode === 'reset' ? 0 : Number.parseFloat(balanceDraft);
+    if (!Number.isFinite(parsedBalance)) {
+      toast.error(mode === 'reset' ? 'Unable to reset balance.' : 'Please enter a valid balance amount');
       return;
     }
+
     try {
-      await updateDoc(doc(db, 'users', selectedUser.id), { totalInvestments: increment(amountToAdd) });
-      toast.success('Balance increased successfully');
-      await fetchUsers();
-      const updatedUserDoc = await getDoc(doc(db, 'users', selectedUser.id));
-      if (updatedUserDoc.exists()) {
-        const data = updatedUserDoc.data();
-        setSelectedUser({
-          id: selectedUser.id,
-          fullName: data.fullName || 'Unknown',
-          email: data.email || 'Unknown',
-          totalInvestments: Number(data.totalInvestments) || 0,
-          totalWithdrawals: Number(data.totalWithdrawals) || 0,
-          country: data.country || undefined,
-          createdAt: data.createdAt || undefined,
-        });
+      const userRef = doc(db, 'users', selectedUser.id);
+      const userDoc = await getDoc(userRef);
+      if (!userDoc.exists()) {
+        toast.error('User record no longer exists.');
+        return;
       }
-      setNewBalance('');
+
+      const userData = userDoc.data();
+      const previousInvestments = Number(userData.totalInvestments) || 0;
+      const previousWithdrawals = Number(userData.totalWithdrawals) || 0;
+      const previousBalance = previousInvestments - previousWithdrawals;
+      const nextBalance = mode === 'reset' ? 0 : parsedBalance;
+      const nextInvestments = previousWithdrawals + nextBalance;
+
+      const balanceAudit = {
+        userId: selectedUser.id,
+        email: userData.email || selectedUser.email,
+        fullName: userData.fullName || selectedUser.fullName,
+        mode,
+        previousBalance,
+        previousInvestments,
+        previousWithdrawals,
+        newBalance: nextBalance,
+        updatedAt: new Date().toISOString(),
+        editedBy: auth.currentUser?.email || 'admin',
+      };
+
+      await addDoc(collection(db, 'users', selectedUser.id, 'balanceHistory'), balanceAudit);
+      await updateDoc(userRef, {
+        ...userData,
+        totalInvestments: nextInvestments,
+        totalWithdrawals: previousWithdrawals,
+        updatedAt: new Date().toISOString(),
+      });
+
+      const updatedUser = {
+        ...selectedUser,
+        totalInvestments: nextInvestments,
+        totalWithdrawals: previousWithdrawals,
+      };
+      setSelectedUser(updatedUser);
+      setBalanceDraft('');
+      await fetchUsers();
+      toast.success(mode === 'reset' ? 'User balance reset successfully.' : 'User balance updated successfully.');
     } catch (err) {
       console.error('Error updating balance:', err);
-      toast.error('Failed to update balance');
+      toast.error('Failed to update balance. No records were removed.');
     }
   };
 
@@ -184,7 +215,7 @@ const AdminDashboard: React.FC = () => {
                         <div className="flex flex-col sm:items-end gap-2">
                           <div className="text-right">
                             <div className="text-sm text-muted-foreground">Balance</div>
-                            <div className="font-semibold">${(user.totalInvestments - user.totalWithdrawals).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                            <div className="font-semibold">${getCurrentBalance(user).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                           </div>
                           <div className="flex flex-col gap-2 sm:flex-row">
                             <Button onClick={() => setSelectedUser(user)} className="w-full sm:w-auto">View Details</Button>
@@ -213,7 +244,7 @@ const AdminDashboard: React.FC = () => {
                     <div><span className="text-sm text-muted-foreground">Country:</span><p>{selectedUser.country || 'Not specified'}</p></div>
                     <div><span className="text-sm text-muted-foreground">Total Investments:</span><p>${selectedUser.totalInvestments.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p></div>
                     <div><span className="text-sm text-muted-foreground">Total Withdrawals:</span><p>${selectedUser.totalWithdrawals.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p></div>
-                    <div><span className="text-sm text-muted-foreground">Current Balance:</span><p>${(selectedUser.totalInvestments - selectedUser.totalWithdrawals).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p></div>
+                    <div><span className="text-sm text-muted-foreground">Current Balance:</span><p>${getCurrentBalance(selectedUser).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p></div>
                     <div><span className="text-sm text-muted-foreground">Member Since:</span><p>{selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString() : 'Unknown'}</p></div>
                   </div>
 
@@ -237,12 +268,23 @@ const AdminDashboard: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="mt-6 space-y-2">
-                    <label className="text-sm font-medium">Add To Balance</label>
-                    <div className="flex space-x-2">
-                      <Input type="number" value={newBalance} onChange={(e) => setNewBalance(e.target.value)} placeholder="Enter amount to add" />
-                      <Button onClick={handleUpdateBalance}>Add Amount</Button>
+                  <div className="mt-6 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium">Edit User Balance</label>
+                      <Button variant="outline" size="sm" onClick={() => setBalanceDraft(String(getCurrentBalance(selectedUser)))}>Use current balance</Button>
                     </div>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={balanceDraft}
+                        onChange={(e) => setBalanceDraft(e.target.value)}
+                        placeholder="Enter balance amount"
+                      />
+                      <Button onClick={() => void handleBalanceEdit('set')}>Set Balance</Button>
+                    </div>
+                    <Button variant="destructive" className="w-full" onClick={() => void handleBalanceEdit('reset')}>Reset Balance to $0</Button>
+                    <p className="text-xs text-muted-foreground">This only updates the user balance fields and saves a backup in the user’s balance history before the change.</p>
                   </div>
                 </div>
               </CardContent>
